@@ -91,11 +91,11 @@ these would save, and whether it is practical to account for it.
 
 Update: I did!
 
-For 5 dice, the number of achievable states is 2794 / 4032 = 69.3%
-For 6 dice it is 3510 / 5376 = 65.3%
+For 5 dice, the number of achievable states is 2794 / 4032 = 69.3%.
+For 6 dice it is 3510 / 5376 = 65.3%.
 
 This makes the state space sizes 2794 * 2^9 = 1 430 528 for 5 dice
-and 3510 * 2^14 = 57 507 840 for 6 dice
+and 3510 * 2^14 = 57 507 840 for 6 dice.
 
 ## Dice
 
