@@ -118,8 +118,8 @@ for 6 dice.
 This means that the total storage requirement to store the expected final score
 for each state as a f32 is 5.81 GB for 5 dice and 455 GB for 6 dice.
 
-Using the compacted statespace above "the line" this would save around 33% space
-giving the state spaces
+Using the compacted statespace above "the line" this
+would save around 33% space giving the state spaces
 3 * 252 * 1 430 528 = 1 081 479 168
 for 5 dice and
 3 * 462 * 57 507 840 = 79 705 866 240
