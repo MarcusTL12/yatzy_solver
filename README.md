@@ -83,11 +83,19 @@ Together with the six additional tiles this is then 2^6 * 63 = 4032
 states above the line, giving a total of 63 * 2^(6 + 9) = 2 064 384 states.
 
 For the 6 dice game 84 points are required, which gives a total state count of
-84 * 2^(6 + 14) = 66 060 288
+84 * 2^(6 + 14) = 88 080 384
 
 This does of course include some impossible states like having over 6 points
 when having none of the 2-6 cells filled. I might look into how much removing
 these would save, and whether it is practical to account for it.
+
+Update: I did!
+
+For 5 dice, the number of achievable states is 2794 / 4032 = 69.3%
+For 6 dice it is 3510 / 5376 = 65.3%
+
+This makes the state space sizes 2794 * 2^9 = 1 430 528 for 5 dice
+and 3510 * 2^14 = 57 507 840 for 6 dice
 
 ## Dice
 
@@ -104,8 +112,16 @@ combinations (or 462 for 6 dice), which is much more managable.
 The total size of the relevant state space is then
 3 * 252 * 2 064 384 = 1 560 674 304
 for 5 dice and
-3 * 462 * 66 060 288 = 91 559 559 168
+3 * 462 * 88 080 384 = 122 079 412 224
 for 6 dice.
 
 This means that the total storage requirement to store the expected final score
-for each state as a f32 is 5.81 GB for 5 dice and 341 GB for 6 dice.
+for each state as a f32 is 5.81 GB for 5 dice and 455 GB for 6 dice.
+
+Using the compacted statespace above "the line" this would save around 33% space
+giving the state spaces
+3 * 252 * 1 430 528 = 1 081 479 168
+for 5 dice and
+3 * 462 * 57 507 840 = 79 705 866 240
+for 6 dice,
+which for f32 turns into 4 GB and 297 GB.
