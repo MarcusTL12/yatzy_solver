@@ -125,3 +125,26 @@ for 5 dice and
 3 * 462 * 57 507 840 = 79 705 866 240
 for 6 dice,
 which for f32 turns into 4 GB and 297 GB.
+
+## The process
+
+At a given state of the game you have n celles open and m throws left.
+The turn moves to a new state with either m - 1 throws left
+or n - 1 celles open and 2 throws left.
+
+This means that we need to order the state space by the number of cells filled.
+A subset of the state space that has a given number of cells filled and
+throws left is one "layer". A layer is indicated with the tuple (m, n)
+
+The process starts with the final layer with only one state;
+all cells filled, no throws left (layer (0, 0)).
+Here the expected remaining score is naturally 0.
+
+The next layer is with one free cell and no throws left (0, 1).
+This is similarly trivial where there is no choice to be made,
+and the expected remaining score is whatever points you get from your
+set of dice in the last open cell.
+
+The first interesting layer is with one free cell and one throw left (1, 1).
+This gives you two choices; get the points from the current set of dice, or
+reroll a subset of the dice, which leads you to some state of layer (0, 1).
