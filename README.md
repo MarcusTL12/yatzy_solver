@@ -167,3 +167,13 @@ with two different dice having a permutational symmetry giving 21 unique
 rerolls. For 5-6 dice the reduction due to permutation symmetries is not a
 trivial amount (7 776 / 46 656 -> 252 / 462 for rerolling 5/6 dice),
 and these can easiliy be stored as small lookup arrays to be looped over.
+
+To find the expectation value of a given set of dice to be rerolled, you loop
+over all possible outcomes for the reroll (the lookup table), and find
+the expected score for the new (total) set of dice (the non rerolled + rerolled)
+in the layer below, then weight by the probability of that particular reroll.
+
+To find the total expected score of a given state we loop over the possible
+ways to reroll (32 or 64 combinations), then find the expected score for each
+of those and pick the highest one. This will be the expected score for the
+current state, and which one we picked will be the combination to reroll.
