@@ -148,3 +148,22 @@ set of dice in the last open cell.
 The first interesting layer is with one free cell and one throw left (1, 1).
 This gives you two choices; get the points from the current set of dice, or
 reroll a subset of the dice, which leads you to some state of layer (0, 1).
+The expected score is then the max of these two choices. The expected score of
+not rerolling is the same as the layer below, just whatever amount of points
+you would get. For rerolling the story becomes more convoluted as you have a
+choice of which dice to reroll.
+
+### Rerolling dice
+
+When rerolling dice you chose between one of 2^5 (or 2^6) sets of dice to
+reroll. This will both include the no-rerolling case and several identical
+cases whenever there are equal dice. However this is a small amount to
+loop over when checking (only 32/64 states), so the cost of reducing these
+is probably not worth it. For a given set of dice to be rerolled there is a
+well defined (and well known) probability distribution of which new set of
+dice you might end up with. For example if rerolling two dice you get the
+distribution of 1/36 chance of each combination of dice, with all the ones
+with two different dice having a permutational symmetry giving 21 unique
+rerolls. For 5-6 dice the reduction due to permutation symmetries is not a
+trivial amount (7 776 / 46 656 -> 252 / 462 for rerolling 5/6 dice),
+and these can easiliy be stored as small lookup arrays to be looped over.
