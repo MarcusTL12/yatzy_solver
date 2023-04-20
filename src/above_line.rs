@@ -1,13 +1,13 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use itertools::iproduct;
 use once_cell::sync::Lazy;
 
-pub static ABOVE_LEVELS_5: Lazy<[Vec<(u32, [bool; 6])>; 7]> = Lazy::new(|| {
+fn make_levels(n: i32) -> [Vec<(u32, [bool; 6])>; 7] {
     let mut levels = [(); 7].map(|_| HashSet::new());
 
     for (i1, i2, i3, i4, i5, i6) in
-        iproduct!(-1..=5, -1..=5, -1..=5, -1..=5, -1..=5, -1..=5)
+        iproduct!(-1..=n, -1..=n, -1..=n, -1..=n, -1..=n, -1..=n)
     {
         let x = [i1, i2, i3, i4, i5, i6];
         let xb = x.map(|x| x >= 0);
@@ -25,28 +25,42 @@ pub static ABOVE_LEVELS_5: Lazy<[Vec<(u32, [bool; 6])>; 7]> = Lazy::new(|| {
         v.sort_unstable();
         v
     })
-});
+}
 
-pub static ABOVE_LEVELS_6: Lazy<[Vec<(u32, [bool; 6])>; 7]> = Lazy::new(|| {
-    let mut levels = [(); 7].map(|_| HashSet::new());
+pub static ABOVE_LEVELS_5: Lazy<[Vec<(u32, [bool; 6])>; 7]> =
+    Lazy::new(|| make_levels(5));
 
-    for (i1, i2, i3, i4, i5, i6) in
-        iproduct!(-1..=6, -1..=6, -1..=6, -1..=6, -1..=6, -1..=6)
-    {
-        let x = [i1, i2, i3, i4, i5, i6];
-        let xb = x.map(|x| x >= 0);
-        let xv = x.zip(xb).map(|(x, b)| x * b as i32);
-        let xs = xv.zip([1, 2, 3, 4, 5, 6]).map(|(x, n)| x * n);
+pub static ABOVE_LEVELS_6: Lazy<[Vec<(u32, [bool; 6])>; 7]> =
+    Lazy::new(|| make_levels(6));
 
-        let n = xb.into_iter().filter(|&x| x).count();
-        let s = 84.min(xs.iter().sum()) as u32;
+fn level_to_map(
+    level: &[(u32, [bool; 6])],
+) -> HashMap<(u32, [bool; 6]), usize> {
+    level.iter().enumerate().map(|(i, &x)| (x, i)).collect()
+}
 
-        levels[n].insert((s, xb));
-    }
+pub static ABOVE_LEVELS_5_MAP: Lazy<[HashMap<(u32, [bool; 6]), usize>; 7]> =
+    Lazy::new(|| {
+        [
+            level_to_map(&ABOVE_LEVELS_5[0]),
+            level_to_map(&ABOVE_LEVELS_5[1]),
+            level_to_map(&ABOVE_LEVELS_5[2]),
+            level_to_map(&ABOVE_LEVELS_5[3]),
+            level_to_map(&ABOVE_LEVELS_5[4]),
+            level_to_map(&ABOVE_LEVELS_5[5]),
+            level_to_map(&ABOVE_LEVELS_5[6]),
+        ]
+    });
 
-    levels.map(|s| {
-        let mut v: Vec<_> = s.into_iter().collect();
-        v.sort_unstable();
-        v
-    })
-});
+pub static ABOVE_LEVELS_6_MAP: Lazy<[HashMap<(u32, [bool; 6]), usize>; 7]> =
+    Lazy::new(|| {
+        [
+            level_to_map(&ABOVE_LEVELS_6[0]),
+            level_to_map(&ABOVE_LEVELS_6[1]),
+            level_to_map(&ABOVE_LEVELS_6[2]),
+            level_to_map(&ABOVE_LEVELS_6[3]),
+            level_to_map(&ABOVE_LEVELS_6[4]),
+            level_to_map(&ABOVE_LEVELS_6[5]),
+            level_to_map(&ABOVE_LEVELS_6[6]),
+        ]
+    });
