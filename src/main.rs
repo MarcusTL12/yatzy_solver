@@ -1,18 +1,14 @@
-use dice_throw::DiceThrow;
+#![feature(array_zip)]
 
+use crate::above_line::ABOVE_LEVELS_6;
 
-pub mod yatzy;
+pub mod above_line;
 pub mod dice_distributions;
 pub mod dice_throw;
+pub mod yatzy;
 
 fn main() {
-    let d = DiceThrow::throw(5);
-
-    println!("{d}");
-    d.test_all();
-    println!("P(d) = {}", d.probability());
-
-    for sd in d.into_sub_throw_iter() {
-        println!("{}", sd);
+    for i in 0..7 {
+        println!("{:?}", ABOVE_LEVELS_6[i].len());
     }
 }

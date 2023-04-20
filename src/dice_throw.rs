@@ -1,7 +1,9 @@
-use std::{ops::{Index, IndexMut}, fmt::{Display, Formatter, Error}};
+use std::{
+    fmt::{Display, Error, Formatter},
+    ops::{Index, IndexMut},
+};
 
 use rand::prelude::*;
-
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct DiceThrow {
@@ -71,6 +73,18 @@ impl From<[u64; 6]> for DiceThrow {
     }
 }
 
+impl<const N: usize> From<[u8; N]> for DiceThrow {
+    fn from(dice: [u8; N]) -> Self {
+        let mut d = Self::new();
+
+        for x in dice {
+            d[x as u64] += 1;
+        }
+
+        d
+    }
+}
+
 impl DiceThrow {
     fn new() -> Self {
         Self { dice: [0; 6] }
@@ -125,9 +139,8 @@ impl DiceThrow {
 
     pub fn building<const A: u64, const B: u64>(&self) -> u64 {
         if let Some(a) = (1..=6).rev().find(|&i| self[i] >= A) {
-            if let Some(b) = (1..=6)
-                .rev()
-                .filter(|&i| i != a).find(|&i| self[i] >= B)
+            if let Some(b) =
+                (1..=6).rev().filter(|&i| i != a).find(|&i| self[i] >= B)
             {
                 A * a + B * b
             } else {

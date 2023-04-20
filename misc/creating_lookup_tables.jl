@@ -46,6 +46,33 @@ function create_all_line_combs_5()
     unique!(sort!(all_combs))
 end
 
+function create_all_line_combs_6()
+    all_combs = Pair{NTuple{6,Bool},Int}[]
+
+    for i1 in -1:6, i2 in -1:6, i3 in -1:6, i4 in -1:6, i5 in -1:6, i6 in -1:6
+        x = (i1, i2, i3, i4, i5, i6)
+        xb = x .>= 0
+        xv = x .* xb
+        xs = xv .* (1:6)
+        s = min(sum(xs), 84)
+        push!(all_combs, xb => s)
+    end
+
+    unique!(sort!(all_combs))
+end
+
+function partition_into_levels(all_combs)
+    T = Tuple{Int,Vector{Int}}
+    levels = (T[], T[], T[], T[], T[], T[], T[])
+
+    for (x, s) in all_combs
+        n = sum(x)
+        push!(levels[n + 1], (s, collect(x)))
+    end
+
+    sort!.(levels)
+end
+
 function create_all_line_combs_5_full()
     all_combs = []
 
