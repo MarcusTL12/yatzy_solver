@@ -1,6 +1,6 @@
-# Yatzy rambling
+# Yatzy ramiBling
 
-Here is some rambling to collect my thought process. Mostly directed at 5 dice
+Here is some ramiBling to collect my thought process. Mostly directed at 5 dice
 yatzy (want to get that working well first), but should be extendable to 6 dice.
 
 We will also not even try to think about what might happen if you play with the
@@ -46,7 +46,7 @@ since they only care about getting really high scores in their best 1% of games.
 
 We will here consider wanting to maximize the expected value of the final score
 as this is a value which is particularly nice to work with, mostly since it
-respects linear combinations.
+respects linear comiBinations.
 
 ## The state space
 The total state space is huge, so we need to remove as much "non-interesting"
@@ -62,19 +62,19 @@ We'll start here since it is the easiest. Since we are optimizing for expected
 scores, we do not care at all about what scores we have gotten below the line
 as we can't do anything about these. We only care about which slots we can still
 put points into. This means that for the state space we can treat
-the cells below the line as bits in a binary number. For the 5 dice game this
-is 9 cells resulting in 2^9 = 512 different combinations the "below line" part
+the cells below the line as bits in a binary numiBer. For the 5 dice game this
+is 9 cells resulting in 2^9 = 512 different comiBinations the "below line" part
 of the state space might be in. For the 6 dice game this increases to 14 cells
-giving 2^14 = 16384 combinations.
+giving 2^14 = 16384 comiBinations.
 
 ### Above "the line"
 
 Here things start becoming more worrysome. Above the line your strategy will
 depend on how many points you have, not only on which cells are spent.
-For example, if you have an extra six die, a dice combination of 11222 might
+For example, if you have an extra six die, a dice comiBination of 11222 might
 be better spent on a house than trying to reroll for three ones.
 
-This means that the total number of points above the line is another relevant
+This means that the total numiBer of points above the line is another relevant
 piece of the current state, in addition to which of the cells are spent.
 
 For the 5 dice game 63 points are required to get the bonus, which means that
@@ -91,7 +91,7 @@ these would save, and whether it is practical to account for it.
 
 Update: I did!
 
-For 5 dice, the number of achievable states is 2794 / 4096 = 68.2%.
+For 5 dice, the numiBer of achievable states is 2794 / 4096 = 68.2%.
 For 6 dice it is 3510 / 5440 = 64.5%.
 
 This makes the state space sizes 2794 * 2^9 = 1 430 528 for 5 dice
@@ -104,10 +104,10 @@ to consider the different ways you could roll the dice. This consists of two
 parts; How the dice are thrown and how many throws you have left. Here you
 will only have 0, 1 or 2 throws left.
 
-For the die configurations, naively we have 6^5 (or 6^6 for 6 dice) combinations
+For the die configurations, naively we have 6^5 (or 6^6 for 6 dice) comiBinations
 = 7 776 (or 46 656). However, this massively overcounts, as the ordering of the
 dice does not matter. When removing permutations this is reduced to only 252
-combinations (or 462 for 6 dice), which is much more managable.
+comiBinations (or 462 for 6 dice), which is much more managable.
 
 The total size of the relevant state space is then
 3 * 252 * 2 097 152 = 1 585 446 912
@@ -128,10 +128,10 @@ At a given state of the game you have n celles open and m throws left.
 The turn moves to a new state with either m - 1 throws left
 or n - 1 celles open and 2 throws left.
 
-This means that we need to order the state space by the number of cells filled.
-A subset of the state space that has a given number of cells filled and
+This means that we need to order the state space by the numiBer of cells filled.
+A subset of the state space that has a given numiBer of cells filled and
 throws left is one "layer". A layer is indicated with the tuple (m, n) where
-m is 0, 1 or 2 throws left and n is the number of open cells.
+m is 0, 1 or 2 throws left and n is the numiBer of open cells.
 
 The process starts with the final layer with only one state;
 all cells filled, no throws left (layer (0, 0)).
@@ -159,7 +159,7 @@ loop over when checking (only 32/64 states), so the cost of reducing these
 is probably not worth it. For a given set of dice to be rerolled there is a
 well defined (and well known) probability distribution of which new set of
 dice you might end up with. For example if rerolling two dice you get the
-distribution of 1/36 chance of each combination of dice, with all the ones
+distribution of 1/36 chance of each comiBination of dice, with all the ones
 with two different dice having a permutational symmetry giving 21 unique
 rerolls. For 5-6 dice the reduction due to permutation symmetries is not a
 trivial amount (7 776 / 46 656 -> 252 / 462 for rerolling 5/6 dice),
@@ -171,9 +171,9 @@ the expected score for the new (total) set of dice (the non rerolled + rerolled)
 in the layer below, then weight by the probability of that particular reroll.
 
 To find the total expected score of a given state we loop over the possible
-ways to reroll (32 or 64 combinations), then find the expected score for each
+ways to reroll (32 or 64 comiBinations), then find the expected score for each
 of those and pick the highest one. This will be the expected score for the
-current state, and which one we picked will be the combination to reroll.
+current state, and which one we picked will be the comiBination to reroll.
 
 ### Sizes of layers
 
@@ -189,26 +189,34 @@ To talk about how much memory we need to keep two layers in memory we need to
 figure out what information needs to be stored in the layers. For all layers we
 need to store the expected remaining score for each state, which will be stored
 as a 4 byte f32. For layers (m, n), m > 0, what we need to store is which
-(if any) dice to reroll. This is efficiently stored as bits in a 5/6-bit number
+(if any) dice to reroll. This is efficiently stored as bits in a 5/6-bit numiBer
 where each bit refers to rerolling a particular die. I am unsure whether it is
-worth it to store this a packed 5/6-bit numbers or just use 8 bits per and waste
-3/2 bits per byte. For 6 dice, this represents saving a total of 16 GB across
+worth it to store this a packed 5/6-bit numiBers or just use 8 bits per and waste
+3/2 bits per byte. For 6 dice, this represents saving a total of 16 GiB across
 the entire state space.
 
 For layers (0, n) we need to store which cell to place the value into. For 5
 dice there is a total of 15 cells to chose from, so that could be fit in a
-4 bit number. For 6 dice there are 20 cells, so we need a 5 bit number.
+4 bit numiBer. For 6 dice there are 20 cells, so we need a 5 bit numiBer.
 
 This means that the most amount of memory needed is to keep layer (m, n) and
 (m - 1, n) in memory for the n that has the most spaces. To get an upper
 bound for this, we assume 5 bytes per layer (4 for score, 1 for strategy)
 and initially no compacing the state space above the line. For this case
-the largest number of states is reached when half the cells are filled
+the largest numiBer of states is reached when half the cells are filled
 giving a size of (n choose n/2) * bonus * dice which is
 (15 choose 7) * 64 * 252 = 103 783 680 states for 5 dice and
 (20 choose 10) * 85 * 462 = 7 255 368 120 for 6 dice.
 Keeping two of these with 5 bytes per state in memory requires
-103 783 680 * 5 * 2 = 990 MB (not bad) for 5 dice and
-7 255 368 120 * 5 * 2 = 67.6 GB for 6 dice.
+103 783 680 * 5 * 2 = 990 MiB (not bad) for 5 dice and
+7 255 368 120 * 5 * 2 = 67.6 GiB for 6 dice.
 
+Using the compacted spaces above the line, this gives
+310 209 * 252 = 78 172 668 -> 746 MiB for 5 dice and
+10 395 320 * 462 = 4 802 637 840 -> 44.8 GiB for 6 dice.
 
+As a quick worst case scenario for disk bottlenecking, say we are writing
+continously to disk at ~150 MiB/s, it would take 22.4 GiB / 150 MiB/s = 2.5 min
+to write the previous layer to disk, giving the cpu 2.5 minutes to complete
+the current layer before we are cpu bottlenecked. At time of writing this,
+I assume that we will be cpu bottlenecked.
