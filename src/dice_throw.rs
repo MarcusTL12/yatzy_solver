@@ -183,27 +183,27 @@ impl DiceThrow {
     }
 
     pub fn test_all(&self) {
-        println!("1: {}", self.ammount_of::<1>());
-        println!("2: {}", self.ammount_of::<2>());
-        println!("3: {}", self.ammount_of::<3>());
-        println!("4: {}", self.ammount_of::<4>());
-        println!("5: {}", self.ammount_of::<5>());
-        println!("6: {}", self.ammount_of::<6>());
+        println!("1:                {}", self.ammount_of::<1>());
+        println!("2:                {}", self.ammount_of::<2>());
+        println!("3:                {}", self.ammount_of::<3>());
+        println!("4:                {}", self.ammount_of::<4>());
+        println!("5:                {}", self.ammount_of::<5>());
+        println!("6:                {}", self.ammount_of::<6>());
         println!("--------");
-        println!("1 pair: {}", self.pairs::<1>());
-        println!("2 pair: {}", self.pairs::<2>());
-        println!("3 pair: {}", self.pairs::<3>());
-        println!("3 of a kind: {}", self.n_of_a_kind::<3>());
-        println!("4 of a kind: {}", self.n_of_a_kind::<4>());
-        println!("5 of a kind: {}", self.n_of_a_kind::<5>());
-        println!("Small straight: {}", self.straight::<1, 5>());
-        println!("Large straight: {}", self.straight::<2, 6>());
-        println!("Full  straight: {}", self.straight::<1, 6>());
-        println!("Hut:   {}", self.building::<3, 2>());
-        println!("House: {}", self.building::<3, 3>());
-        println!("Tower: {}", self.building::<4, 2>());
-        println!("Chance: {}", self.chance());
-        println!("yatzy: {}", self.yatzy());
+        println!("1 pair:           {}", self.pairs::<1>());
+        println!("2 pair:           {}", self.pairs::<2>());
+        println!("3 pair:           {}", self.pairs::<3>());
+        println!("3 of a kind:      {}", self.n_of_a_kind::<3>());
+        println!("4 of a kind:      {}", self.n_of_a_kind::<4>());
+        println!("5 of a kind:      {}", self.n_of_a_kind::<5>());
+        println!("Small straight:   {}", self.straight::<1, 5>());
+        println!("Large straight:   {}", self.straight::<2, 6>());
+        println!("Full  straight:   {}", self.straight::<1, 6>());
+        println!("Hut:              {}", self.building::<3, 2>());
+        println!("House:            {}", self.building::<3, 3>());
+        println!("Tower:            {}", self.building::<4, 2>());
+        println!("Chance:           {}", self.chance());
+        println!("yatzy:            {}", self.yatzy());
     }
 
     pub fn into_sub_throw_iter(self) -> SubThrowIter {
