@@ -208,7 +208,7 @@ giving a size of (n choose n/2) * bonus * dice which is
 (15 choose 7) * 64 * 252 = 103 783 680 states for 5 dice and
 (20 choose 10) * 85 * 462 = 7 255 368 120 for 6 dice.
 Keeping two of these with 5 bytes per state in memory requires
-102 162 060 * 5 * 2 = 990 MB (not bad) for 5 dice and
+103 783 680 * 5 * 2 = 990 MB (not bad) for 5 dice and
 7 255 368 120 * 5 * 2 = 67.6 GB for 6 dice.
 
 
