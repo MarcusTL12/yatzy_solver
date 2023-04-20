@@ -1,4 +1,4 @@
-# Yatzy ramiBling
+# Yatzy rambling
 
 Here is some ramiBling to collect my thought process. Mostly directed at 5 dice
 yatzy (want to get that working well first), but should be extendable to 6 dice.
