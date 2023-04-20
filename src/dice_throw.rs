@@ -189,7 +189,7 @@ impl DiceThrow {
         println!("4:                {}", self.ammount_of::<4>());
         println!("5:                {}", self.ammount_of::<5>());
         println!("6:                {}", self.ammount_of::<6>());
-        println!("--------");
+        println!("--------------------");
         println!("1 pair:           {}", self.pairs::<1>());
         println!("2 pair:           {}", self.pairs::<2>());
         println!("3 pair:           {}", self.pairs::<3>());
