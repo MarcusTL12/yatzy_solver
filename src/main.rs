@@ -1,8 +1,18 @@
-use crate::dice_distributions::DICE_ORDER_MAP;
+use dice_throw::DiceThrow;
 
-mod yatzy;
-mod dice_distributions;
+
+pub mod yatzy;
+pub mod dice_distributions;
+pub mod dice_throw;
 
 fn main() {
-    println!("{:?}", DICE_ORDER_MAP.5);
+    let d = DiceThrow::throw(5);
+
+    println!("{d}");
+    d.test_all();
+    println!("P(d) = {}", d.probability());
+
+    for sd in d.into_sub_throw_iter() {
+        println!("{}", sd);
+    }
 }
