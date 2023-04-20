@@ -79,11 +79,11 @@ piece of the current state, in addition to which of the cells are spent.
 
 For the 5 dice game 63 points are required to get the bonus, which means that
 there are 63 different states that is needed to store: 0-62 and "enough.
-Together with the six additional tiles this is then 2^6 * 63 = 4032
-states above the line, giving a total of 63 * 2^(6 + 9) = 2 064 384 states.
+Together with the six additional tiles this is then 2^6 * 64 = 4096
+states above the line, giving a total of 64 * 2^(6 + 9) = 2 097 152 states.
 
 For the 6 dice game 84 points are required, which gives a total state count of
-84 * 2^(6 + 14) = 88 080 384
+85 * 2^(6 + 14) = 89 128 960
 
 This does of course include some impossible states like having over 6 points
 when having none of the 2-6 cells filled. I might look into how much removing
@@ -91,8 +91,8 @@ these would save, and whether it is practical to account for it.
 
 Update: I did!
 
-For 5 dice, the number of achievable states is 2794 / 4032 = 69.3%.
-For 6 dice it is 3510 / 5376 = 65.3%.
+For 5 dice, the number of achievable states is 2794 / 4096 = 68.2%.
+For 6 dice it is 3510 / 5440 = 64.5%.
 
 This makes the state space sizes 2794 * 2^9 = 1 430 528 for 5 dice
 and 3510 * 2^14 = 57 507 840 for 6 dice.
@@ -110,21 +110,17 @@ dice does not matter. When removing permutations this is reduced to only 252
 combinations (or 462 for 6 dice), which is much more managable.
 
 The total size of the relevant state space is then
-3 * 252 * 2 064 384 = 1 560 674 304
+3 * 252 * 2 097 152 = 1 585 446 912
 for 5 dice and
-3 * 462 * 88 080 384 = 122 079 412 224
+3 * 462 * 89 128 960 = 123 532 738 560
 for 6 dice.
-
-This means that the total storage requirement to store the expected final score
-for each state as a f32 is 5.81 GB for 5 dice and 455 GB for 6 dice.
 
 Using the compacted statespace above "the line" this
 would save around 33% space giving the state spaces
 3 * 252 * 1 430 528 = 1 081 479 168
 for 5 dice and
 3 * 462 * 57 507 840 = 79 705 866 240
-for 6 dice,
-which for f32 turns into 4 GB and 297 GB.
+for 6 dice.
 
 ## The process
 
@@ -134,7 +130,8 @@ or n - 1 celles open and 2 throws left.
 
 This means that we need to order the state space by the number of cells filled.
 A subset of the state space that has a given number of cells filled and
-throws left is one "layer". A layer is indicated with the tuple (m, n)
+throws left is one "layer". A layer is indicated with the tuple (m, n) where
+m is 0, 1 or 2 throws left and n is the number of open cells.
 
 The process starts with the final layer with only one state;
 all cells filled, no throws left (layer (0, 0)).
@@ -177,3 +174,41 @@ To find the total expected score of a given state we loop over the possible
 ways to reroll (32 or 64 combinations), then find the expected score for each
 of those and pick the highest one. This will be the expected score for the
 current state, and which one we picked will be the combination to reroll.
+
+### Sizes of layers
+
+When finding the strategy and expected scores of a given layer we require random
+access to the next layer below, that is at layer (m, n) we need to be able
+to access any elements of layer (m - 1, n), and at layer (0, n) we need access
+to layer (2, n - 1). This means that at all times we need to be able to keep
+two adjacent layers in memory. While we are just done working on layer
+(m - 1, n) we start working on layer (m, n) while asynchronously writing layer
+(m - 1, n) to disk.
+
+To talk about how much memory we need to keep two layers in memory we need to
+figure out what information needs to be stored in the layers. For all layers we
+need to store the expected remaining score for each state, which will be stored
+as a 4 byte f32. For layers (m, n), m > 0, what we need to store is which
+(if any) dice to reroll. This is efficiently stored as bits in a 5/6-bit number
+where each bit refers to rerolling a particular die. I am unsure whether it is
+worth it to store this a packed 5/6-bit numbers or just use 8 bits per and waste
+3/2 bits per byte. For 6 dice, this represents saving a total of 16 GB across
+the entire state space.
+
+For layers (0, n) we need to store which cell to place the value into. For 5
+dice there is a total of 15 cells to chose from, so that could be fit in a
+4 bit number. For 6 dice there are 20 cells, so we need a 5 bit number.
+
+This means that the most amount of memory needed is to keep layer (m, n) and
+(m - 1, n) in memory for the n that has the most spaces. To get an upper
+bound for this, we assume 5 bytes per layer (4 for score, 1 for strategy)
+and initially no compacing the state space above the line. For this case
+the largest number of states is reached when half the cells are filled
+giving a size of (n choose n/2) * bonus * dice which is
+(15 choose 7) * 64 * 252 = 103 783 680 states for 5 dice and
+(20 choose 10) * 85 * 462 = 7 255 368 120 for 6 dice.
+Keeping two of these with 5 bytes per state in memory requires
+102 162 060 * 5 * 2 = 990 MB (not bad) for 5 dice and
+7 255 368 120 * 5 * 2 = 67.6 GB for 6 dice.
+
+
