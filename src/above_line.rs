@@ -27,11 +27,11 @@ fn make_levels(n: i32) -> [Vec<(u32, [bool; 6])>; 7] {
     })
 }
 
-pub static ABOVE_LEVELS_5: Lazy<[Vec<(u32, [bool; 6])>; 7]> =
-    Lazy::new(|| make_levels(5));
+type AboveLevelsType = [Vec<(u32, [bool; 6])>; 7];
 
-pub static ABOVE_LEVELS_6: Lazy<[Vec<(u32, [bool; 6])>; 7]> =
-    Lazy::new(|| make_levels(6));
+pub static ABOVE_LEVELS_5: Lazy<AboveLevelsType> = Lazy::new(|| make_levels(5));
+
+pub static ABOVE_LEVELS_6: Lazy<AboveLevelsType> = Lazy::new(|| make_levels(6));
 
 fn level_to_map(
     level: &[(u32, [bool; 6])],
@@ -39,28 +39,28 @@ fn level_to_map(
     level.iter().enumerate().map(|(i, &x)| (x, i)).collect()
 }
 
-pub static ABOVE_LEVELS_5_MAP: Lazy<[HashMap<(u32, [bool; 6]), usize>; 7]> =
-    Lazy::new(|| {
-        [
-            level_to_map(&ABOVE_LEVELS_5[0]),
-            level_to_map(&ABOVE_LEVELS_5[1]),
-            level_to_map(&ABOVE_LEVELS_5[2]),
-            level_to_map(&ABOVE_LEVELS_5[3]),
-            level_to_map(&ABOVE_LEVELS_5[4]),
-            level_to_map(&ABOVE_LEVELS_5[5]),
-            level_to_map(&ABOVE_LEVELS_5[6]),
-        ]
-    });
+type AboveLevelsMapType = [HashMap<(u32, [bool; 6]), usize>; 7];
 
-pub static ABOVE_LEVELS_6_MAP: Lazy<[HashMap<(u32, [bool; 6]), usize>; 7]> =
-    Lazy::new(|| {
-        [
-            level_to_map(&ABOVE_LEVELS_6[0]),
-            level_to_map(&ABOVE_LEVELS_6[1]),
-            level_to_map(&ABOVE_LEVELS_6[2]),
-            level_to_map(&ABOVE_LEVELS_6[3]),
-            level_to_map(&ABOVE_LEVELS_6[4]),
-            level_to_map(&ABOVE_LEVELS_6[5]),
-            level_to_map(&ABOVE_LEVELS_6[6]),
-        ]
-    });
+pub static ABOVE_LEVELS_5_MAP: Lazy<AboveLevelsMapType> = Lazy::new(|| {
+    [
+        level_to_map(&ABOVE_LEVELS_5[0]),
+        level_to_map(&ABOVE_LEVELS_5[1]),
+        level_to_map(&ABOVE_LEVELS_5[2]),
+        level_to_map(&ABOVE_LEVELS_5[3]),
+        level_to_map(&ABOVE_LEVELS_5[4]),
+        level_to_map(&ABOVE_LEVELS_5[5]),
+        level_to_map(&ABOVE_LEVELS_5[6]),
+    ]
+});
+
+pub static ABOVE_LEVELS_6_MAP: Lazy<AboveLevelsMapType> = Lazy::new(|| {
+    [
+        level_to_map(&ABOVE_LEVELS_6[0]),
+        level_to_map(&ABOVE_LEVELS_6[1]),
+        level_to_map(&ABOVE_LEVELS_6[2]),
+        level_to_map(&ABOVE_LEVELS_6[3]),
+        level_to_map(&ABOVE_LEVELS_6[4]),
+        level_to_map(&ABOVE_LEVELS_6[5]),
+        level_to_map(&ABOVE_LEVELS_6[6]),
+    ]
+});
