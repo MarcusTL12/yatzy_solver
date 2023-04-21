@@ -33,34 +33,28 @@ pub static ABOVE_LEVELS_5: Lazy<AboveLevelsType> = Lazy::new(|| make_levels(5));
 
 pub static ABOVE_LEVELS_6: Lazy<AboveLevelsType> = Lazy::new(|| make_levels(6));
 
-fn level_to_map(
-    level: &[(u32, [bool; 6])],
-) -> HashMap<(u32, [bool; 6]), usize> {
-    level.iter().enumerate().map(|(i, &x)| (x, i)).collect()
+type AboveLevelsMapType = HashMap<(u32, [bool; 6]), usize>;
+
+fn level_to_map(map: &mut AboveLevelsMapType, level: &[(u32, [bool; 6])]) {
+    map.extend(level.iter().enumerate().map(|(i, &x)| (x, i)))
 }
 
-type AboveLevelsMapType = [HashMap<(u32, [bool; 6]), usize>; 7];
-
 pub static ABOVE_LEVELS_5_MAP: Lazy<AboveLevelsMapType> = Lazy::new(|| {
-    [
-        level_to_map(&ABOVE_LEVELS_5[0]),
-        level_to_map(&ABOVE_LEVELS_5[1]),
-        level_to_map(&ABOVE_LEVELS_5[2]),
-        level_to_map(&ABOVE_LEVELS_5[3]),
-        level_to_map(&ABOVE_LEVELS_5[4]),
-        level_to_map(&ABOVE_LEVELS_5[5]),
-        level_to_map(&ABOVE_LEVELS_5[6]),
-    ]
+    let mut map = AboveLevelsMapType::new();
+
+    for l in ABOVE_LEVELS_5.iter() {
+        level_to_map(&mut map, l);
+    }
+
+    map
 });
 
 pub static ABOVE_LEVELS_6_MAP: Lazy<AboveLevelsMapType> = Lazy::new(|| {
-    [
-        level_to_map(&ABOVE_LEVELS_6[0]),
-        level_to_map(&ABOVE_LEVELS_6[1]),
-        level_to_map(&ABOVE_LEVELS_6[2]),
-        level_to_map(&ABOVE_LEVELS_6[3]),
-        level_to_map(&ABOVE_LEVELS_6[4]),
-        level_to_map(&ABOVE_LEVELS_6[5]),
-        level_to_map(&ABOVE_LEVELS_6[6]),
-    ]
+    let mut map = AboveLevelsMapType::new();
+
+    for l in ABOVE_LEVELS_6.iter() {
+        level_to_map(&mut map, l);
+    }
+
+    map
 });

@@ -13,8 +13,7 @@ impl State {
         let n_below = self.cells[6..].iter().filter(|&&b| b).count();
 
         let &above_cells = self.cells.split_array_ref().0;
-        let above_ind =
-            ABOVE_LEVELS_5_MAP[n_above][&(self.points_above, above_cells)];
+        let above_ind = ABOVE_LEVELS_5_MAP[&(self.points_above, above_cells)];
 
         // TODO: make lookup tables for levels below
 
