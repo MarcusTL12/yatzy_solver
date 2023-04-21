@@ -1,6 +1,6 @@
 // This is for normal 5 dice yatzy like shown in misc/yatzy.png
 
-use crate::above_line::ABOVE_LEVELS_5_MAP;
+use crate::level_ordering::ABOVE_LEVELS_5_MAP;
 
 struct State {
     cells: [bool; 15],

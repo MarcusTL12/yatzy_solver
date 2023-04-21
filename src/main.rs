@@ -1,15 +1,14 @@
-#![feature(array_zip, split_array)]
+#![feature(array_zip, split_array, generic_const_exprs)]
+#![allow(incomplete_features)]
 
-use crate::above_line::ABOVE_LEVELS_6;
+use crate::level_ordering::BELOW_LEVELS_5;
 
-pub mod above_line;
+pub mod level_ordering;
 pub mod dice_distributions;
 pub mod dice_throw;
 pub mod yatzy;
 pub mod util;
 
 fn main() {
-    for i in 0..7 {
-        println!("{:?}", ABOVE_LEVELS_6[i].len());
-    }
+    println!("{:?}", BELOW_LEVELS_5[3]);
 }
