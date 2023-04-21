@@ -1,10 +1,10 @@
 // This is the generic yatzy state for either 5 or 6 dice.
 
-use crate::{level_ordering::*, util::count_true};
+use crate::{dice_throw::DiceThrow, level_ordering::*, util::count_true};
 
 pub struct State<const CELLS: usize> {
     cells: [bool; CELLS],
-    points_above: u32,
+    points_above: usize,
 }
 
 pub type YatzyState5 = State<15>;
@@ -37,6 +37,21 @@ impl<const CELLS: usize> State<CELLS> {
     {
         count_true(self.get_below_cells())
     }
+
+    pub fn set_cell(&mut self, i: usize, throw: DiceThrow) -> usize
+    where
+        [(); CELLS / 5 + 2]:,
+    {
+        let points = throw.cell_score::<{ CELLS / 5 + 2 }>(i);
+
+        if i < 6 {
+            self.points_above += points;
+        }
+
+        self.cells[i] = true;
+
+        points
+    }
 }
 
 impl Default for YatzyState5 {
@@ -61,6 +76,12 @@ impl YatzyState5 {
         let max_above = ABOVE_LEVELS_5[self.get_n_above()].len();
 
         below_ind * max_above + above_ind
+    }
+}
+
+impl Default for YatzyState6 {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

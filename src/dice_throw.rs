@@ -7,19 +7,19 @@ use rand::prelude::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct DiceThrow {
-    dice: [u64; 6],
+    dice: [usize; 6],
 }
 
-impl Index<u64> for DiceThrow {
-    type Output = u64;
-    fn index(&self, index: u64) -> &Self::Output {
-        &self.dice[index as usize - 1]
+impl Index<usize> for DiceThrow {
+    type Output = usize;
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.dice[index - 1]
     }
 }
 
-impl IndexMut<u64> for DiceThrow {
-    fn index_mut(&mut self, index: u64) -> &mut Self::Output {
-        &mut self.dice[index as usize - 1]
+impl IndexMut<usize> for DiceThrow {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        &mut self.dice[index - 1]
     }
 }
 
@@ -43,7 +43,7 @@ impl Display for DiceThrow {
 
         for i in (0..9).step_by(3) {
             for j in 1..=6 {
-                let eyes = &EYES[j as usize - 1];
+                let eyes = &EYES[j - 1];
                 for _ in 0..self[j] {
                     write!(
                         f,
@@ -67,8 +67,8 @@ impl Display for DiceThrow {
     }
 }
 
-impl From<[u64; 6]> for DiceThrow {
-    fn from(dice: [u64; 6]) -> Self {
+impl From<[usize; 6]> for DiceThrow {
+    fn from(dice: [usize; 6]) -> Self {
         Self { dice }
     }
 }
@@ -78,7 +78,7 @@ impl<const N: usize> From<[u8; N]> for DiceThrow {
         let mut d = Self::new();
 
         for x in dice {
-            d[x as u64] += 1;
+            d[x as usize] += 1;
         }
 
         d
@@ -104,11 +104,11 @@ impl DiceThrow {
         dice_throw
     }
 
-    pub fn ammount_of<const N: u64>(&self) -> u64 {
+    pub fn ammount_of<const N: usize>(&self) -> usize {
         self[N] * N
     }
 
-    pub fn pairs<const N: usize>(&self) -> u64 {
+    pub fn pairs<const N: usize>(&self) -> usize {
         let (score, amt) = (1..=6)
             .rev()
             .filter_map(|i| if self[i] >= 2 { Some(i * 2) } else { None })
@@ -122,14 +122,14 @@ impl DiceThrow {
         }
     }
 
-    pub fn n_of_a_kind<const N: u64>(&self) -> u64 {
+    pub fn n_of_a_kind<const N: usize>(&self) -> usize {
         (1..=6)
             .rev()
             .find_map(|i| if self[i] >= N { Some(i * N) } else { None })
             .unwrap_or(0)
     }
 
-    pub fn straight<const A: u64, const B: u64>(&self) -> u64 {
+    pub fn straight<const A: usize, const B: usize>(&self) -> usize {
         if (A..=B).all(|i| self[i] >= 1) {
             (A..=B).sum()
         } else {
@@ -137,7 +137,7 @@ impl DiceThrow {
         }
     }
 
-    pub fn building<const A: u64, const B: u64>(&self) -> u64 {
+    pub fn building<const A: usize, const B: usize>(&self) -> usize {
         if let Some(a) = (1..=6).rev().find(|&i| self[i] >= A) {
             if let Some(b) =
                 (1..=6).rev().filter(|&i| i != a).find(|&i| self[i] >= B)
@@ -151,12 +151,12 @@ impl DiceThrow {
         }
     }
 
-    pub fn chance(&self) -> u64 {
+    pub fn chance(&self) -> usize {
         (1..=6).map(|i| self[i] * i).sum()
     }
 
-    pub fn yatzy(&self) -> u64 {
-        let amt_dice: u64 = (1..=6).map(|i| self[i]).sum();
+    pub fn yatzy(&self) -> usize {
+        let amt_dice: usize = (1..=6).map(|i| self[i]).sum();
 
         if (1..=6).any(|i| self[i] == amt_dice) {
             match amt_dice {
@@ -169,7 +169,7 @@ impl DiceThrow {
         }
     }
 
-    pub fn cell_score<const N: u64>(&self, cell_ind: usize) -> u64 {
+    pub fn cell_score<const N: usize>(&self, cell_ind: usize) -> usize {
         match (N, cell_ind) {
             (_, 0) => self.ammount_of::<1>(),
             (_, 1) => self.ammount_of::<2>(),
@@ -223,33 +223,33 @@ impl DiceThrow {
         SubThrowIter::from(self)
     }
 
-    pub fn amt_dice(&self) -> u64 {
+    pub fn amt_dice(&self) -> usize {
         (1..=6).map(|i| self[i]).sum()
     }
 
     pub fn probability(&self) -> f64 {
         let amt_dice = self.amt_dice();
 
-        let tot = 6u64.pow(amt_dice as u32);
+        let tot = 6usize.pow(amt_dice as u32);
 
-        let perms: u64 = factorial(amt_dice);
+        let perms: usize = factorial(amt_dice);
 
-        let dup_perms: u64 = (1..=6).map(|i| factorial(self[i])).product();
+        let dup_perms: usize = (1..=6).map(|i| factorial(self[i])).product();
 
         let actual_perms = perms / dup_perms;
 
         (actual_perms as f64) / (tot as f64)
     }
 
-    pub fn into_ordered_dice(&self) -> impl Iterator<Item = u64> + '_ {
+    pub fn into_ordered_dice(&self) -> impl Iterator<Item = usize> + '_ {
         self.dice
             .iter()
             .enumerate()
-            .flat_map(|(i, &amt)| (0..amt).map(move |_| (i as u64) + 1))
+            .flat_map(|(i, &amt)| (0..amt).map(move |_| i + 1))
     }
 }
 
-fn factorial(n: u64) -> u64 {
+fn factorial(n: usize) -> usize {
     (2..=n).product()
 }
 

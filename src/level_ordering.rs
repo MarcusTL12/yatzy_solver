@@ -18,7 +18,7 @@ fn a_levels<const N: i32>() -> AboveLevelsType {
         let xs = xv.zip([1, 2, 3, 4, 5, 6]).map(|(x, n)| x * n);
 
         let n = xb.into_iter().filter(|&x| x).count();
-        let s = 63.min(xs.iter().sum()) as u32;
+        let s = 63.min(xs.iter().sum()) as usize;
 
         levels[n].insert((s, xb));
     }
@@ -77,12 +77,12 @@ fn b_levels<const N: usize>() -> [Vec<[bool; N]>; N + 1] {
 
 // Defining lookup tables:
 
-type AboveLevelsType = [Vec<(u32, [bool; 6])>; 7];
+type AboveLevelsType = [Vec<(usize, [bool; 6])>; 7];
 
 pub static ABOVE_LEVELS_5: Lazy<AboveLevelsType> = Lazy::new(a_levels::<5>);
 pub static ABOVE_LEVELS_6: Lazy<AboveLevelsType> = Lazy::new(a_levels::<6>);
 
-type AboveLevelsMapType = HashMap<(u32, [bool; 6]), usize>;
+type AboveLevelsMapType = HashMap<(usize, [bool; 6]), usize>;
 
 pub static ABOVE_LEVELS_5_MAP: Lazy<AboveLevelsMapType> =
     Lazy::new(|| make_map(&ABOVE_LEVELS_5));
