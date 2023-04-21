@@ -11,3 +11,7 @@ pub fn parse_binary(bits: &[bool]) -> usize {
 
     x
 }
+
+pub fn count_true<const N: usize>(bits: [bool; N]) -> usize {
+    bits.into_iter().filter(|&b| b).count()
+}
