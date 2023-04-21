@@ -2,24 +2,24 @@
 
 use crate::{level_ordering::*, util::count_true};
 
-const N_CELLS_5: usize = 15;
-const N_CELLS_6: usize = 20;
-
-pub struct State<const N: usize> {
-    cells: [bool; N],
+pub struct State<const CELLS: usize> {
+    cells: [bool; CELLS],
     points_above: u32,
 }
 
-impl<const N: usize> State<N> {
+pub type YatzyState5 = State<15>;
+pub type YatzyState6 = State<20>;
+
+impl<const CELLS: usize> State<CELLS> {
     pub fn get_above_cells(&self) -> [bool; 6] {
         *self.cells.split_array_ref().0
     }
 
-    pub fn get_below_cells(&self) -> [bool; N - 6] {
+    pub fn get_below_cells(&self) -> [bool; CELLS - 6] {
         *self.cells.rsplit_array_ref().1
     }
 
-    pub fn split_cells(&self) -> ([bool; 6], [bool; N - 6]) {
+    pub fn split_cells(&self) -> ([bool; 6], [bool; CELLS - 6]) {
         (self.get_above_cells(), self.get_below_cells())
     }
 
@@ -33,13 +33,26 @@ impl<const N: usize> State<N> {
 
     pub fn get_n_below(&self) -> usize
     where
-        [(); N - 6]:,
+        [(); CELLS - 6]:,
     {
         count_true(self.get_below_cells())
     }
 }
 
-impl State<N_CELLS_5> {
+impl Default for YatzyState5 {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl YatzyState5 {
+    pub fn new() -> Self {
+        Self {
+            cells: [false; 15],
+            points_above: 0,
+        }
+    }
+
     pub fn get_index(&self) -> usize {
         let (above_cells, below_cells) = self.split_cells();
         let above_ind = ABOVE_LEVELS_5_MAP[&(self.points_above, above_cells)];
@@ -51,7 +64,14 @@ impl State<N_CELLS_5> {
     }
 }
 
-impl State<N_CELLS_6> {
+impl YatzyState6 {
+    pub fn new() -> Self {
+        Self {
+            cells: [false; 20],
+            points_above: 0,
+        }
+    }
+
     pub fn get_index(&self) -> usize {
         let (above_cells, below_cells) = self.split_cells();
         let above_ind = ABOVE_LEVELS_6_MAP[&(self.points_above, above_cells)];
