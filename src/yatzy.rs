@@ -2,13 +2,30 @@
 
 use crate::{dice_throw::DiceThrow, level_ordering::*, util::count_true};
 
+#[derive(Clone)]
 pub struct State<const CELLS: usize> {
-    cells: [bool; CELLS],
-    points_above: usize,
+    pub cells: [bool; CELLS],
+    pub points_above: usize,
 }
 
 pub type YatzyState5 = State<15>;
 pub type YatzyState6 = State<20>;
+
+impl<const CELLS: usize> From<([bool; 6], [bool; CELLS - 6], usize)>
+    for State<CELLS>
+{
+    fn from(
+        (above, below, points_above): ([bool; 6], [bool; CELLS - 6], usize),
+    ) -> Self {
+        let mut cells = [false; CELLS];
+        *cells.split_array_mut().0 = above;
+        *cells.rsplit_array_mut().1 = below;
+        Self {
+            cells,
+            points_above,
+        }
+    }
+}
 
 impl<const CELLS: usize> State<CELLS> {
     pub fn get_above_cells(&self) -> [bool; 6] {
@@ -38,7 +55,7 @@ impl<const CELLS: usize> State<CELLS> {
         count_true(self.get_below_cells())
     }
 
-    pub fn set_cell(&mut self, i: usize, throw: DiceThrow) -> usize
+    pub fn modify_cell(&mut self, i: usize, throw: DiceThrow) -> usize
     where
         [(); CELLS / 5 + 2]:,
     {
@@ -51,6 +68,17 @@ impl<const CELLS: usize> State<CELLS> {
         self.cells[i] = true;
 
         points
+    }
+
+    pub fn set_cell(&self, i: usize, throw: DiceThrow) -> (Self, usize)
+    where
+        [(); CELLS / 5 + 2]:,
+    {
+        let mut state = self.clone();
+
+        let score = state.modify_cell(i, throw);
+
+        (state, score)
     }
 }
 

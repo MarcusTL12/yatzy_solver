@@ -5,7 +5,7 @@ use std::{
 
 use rand::prelude::*;
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct DiceThrow {
     dice: [usize; 6],
 }
