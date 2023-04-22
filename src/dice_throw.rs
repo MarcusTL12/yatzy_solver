@@ -275,7 +275,7 @@ impl Iterator for SubThrowIter {
         if self.done {
             None
         } else {
-            let ans = Some(self.sub_throw.clone());
+            let ans = Some(self.sub_throw);
             for i in 1..=6 {
                 if self.sub_throw[i] < self.dice[i] {
                     self.sub_throw[i] += 1;
