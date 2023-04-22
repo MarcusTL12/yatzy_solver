@@ -1,25 +1,27 @@
 #![feature(array_zip, split_array, generic_const_exprs)]
 #![allow(incomplete_features)]
 
-use yatzy::YatzyState5;
-
-use crate::dice_throw::DiceThrow;
+use solver::{make_bottom_layer_5dice, solve_layer_type1_5dice};
 
 pub mod dice_distributions;
 pub mod dice_throw;
 pub mod level_ordering;
+pub mod solver;
 pub mod util;
 pub mod yatzy;
-pub mod solver;
 
 fn main() {
-    let mut s = YatzyState5::new();
+    let first_scores = make_bottom_layer_5dice();
 
-    let dt = DiceThrow::from([1usize, 0, 0, 3, 0, 1]);
+    let (scores, strats) = solve_layer_type1_5dice(15, &first_scores);
 
-    println!("{dt}");
+    // println!("{scores:?}");
+    // println!("{strats:?}");
 
-    s.modify_cell(3, dt);
+    let max_score = scores
+        .iter()
+        .max_by(|a, b| a.partial_cmp(b).unwrap())
+        .unwrap();
 
-    println!("{}", s.get_index());
+    println!("{max_score}");
 }
