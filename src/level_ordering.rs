@@ -6,6 +6,14 @@ use std::{
 use itertools::iproduct;
 use once_cell::sync::Lazy;
 
+const fn points_above<const N: i32>() -> i32 {
+    match N {
+        5 => 63,
+        6 => 84,
+        _ => panic!("Amount of dice not supported!"),
+    }
+}
+
 fn a_levels<const N: i32>() -> AboveLevelsType {
     let mut levels = [(); 7].map(|_| HashSet::new());
 
@@ -18,7 +26,7 @@ fn a_levels<const N: i32>() -> AboveLevelsType {
         let xs = xv.zip([1, 2, 3, 4, 5, 6]).map(|(x, n)| x * n);
 
         let n = xb.into_iter().filter(|&x| x).count();
-        let s = 63.min(xs.iter().sum()) as usize;
+        let s = points_above::<N>().min(xs.iter().sum()) as usize;
 
         levels[n].insert((s, xb));
     }

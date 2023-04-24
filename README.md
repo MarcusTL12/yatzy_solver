@@ -244,5 +244,4 @@ use this little RAM that does not require reading from disk. The easiest scheme
 to not have to read from disk is to solve the layers "row by row" or
 "column by column" whichever requires least max RAM. This turns out to be to
 keep a "column" in memory at a time which would require 573 MiB (5 dice) or
-29.1 GiB (6 dice). This means that I might be able to run this on my personal
-desktop computer with 32 GiB of memory.
+33.2 GiB (6 dice).
