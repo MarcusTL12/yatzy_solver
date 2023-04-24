@@ -40,6 +40,22 @@ fn main() {
     let d1 = timer.elapsed();
     println!("time = {d1:?}");
 
+    let timer = Instant::now();
+
+    let (scores4, _) =
+        solve_layer_type1_5dice(6, 5, &Array3::zeros([0; 3]), &scores3);
+
+    let d1 = timer.elapsed();
+    println!("time = {d1:?}");
+
+    let timer = Instant::now();
+
+    let (scores5, _) =
+        solve_layer_type1_5dice(6, 4, &Array3::zeros([0; 3]), &scores4);
+
+    let d1 = timer.elapsed();
+    println!("time = {d1:?}");
+
     // let max_score = scores
     //     .iter()
     //     .max_by(|a, b| a.partial_cmp(b).unwrap())

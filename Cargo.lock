@@ -127,6 +127,7 @@ dependencies = [
  "num-integer",
  "num-traits",
  "rawpointer",
+ "rayon",
 ]
 
 [[package]]
@@ -257,5 +258,4 @@ dependencies = [
  "ndarray",
  "once_cell",
  "rand",
- "rayon",
 ]
