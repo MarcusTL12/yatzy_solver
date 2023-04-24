@@ -10,7 +10,8 @@ use crate::{
 pub fn solve_layer_type1_5dice(
     na: usize,
     nb: usize,
-    prev_layer_scores: &Array3<f32>,
+    prev_above_layer_scores: &Array3<f32>,
+    prev_below_layer_scores: &Array3<f32>,
 ) -> (Array3<f32>, Array3<u8>) {
     const N_DICE_THROWS: usize = DICE_DISTR.5.len();
 
@@ -50,6 +51,12 @@ pub fn solve_layer_type1_5dice(
                     let new_ai = new_state.get_above_index();
                     let new_bi = new_state.get_below_index();
 
+                    let prev_layer = if cell_i < 6 {
+                        prev_above_layer_scores
+                    } else {
+                        prev_below_layer_scores
+                    };
+
                     // Expected score will be the extra score (guaranteed)
                     // plus the expected score based on what you might roll next
                     let mut expected_score = extra_score as f32;
@@ -61,7 +68,7 @@ pub fn solve_layer_type1_5dice(
                         let prob = prob as f32 / N_DICE_THROWS as f32;
 
                         expected_score +=
-                            prob * prev_layer_scores[[new_ai, new_bi, new_ti]];
+                            prob * prev_layer[[new_ai, new_bi, new_ti]];
                     }
 
                     if expected_score > best_score {
