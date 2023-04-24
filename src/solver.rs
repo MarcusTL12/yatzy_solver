@@ -1,12 +1,15 @@
 use ndarray::{Array3, Zip};
 
 use crate::{
-    dice_distributions::DICE_DISTR,
+    dice_distributions::{DICE_DISTR, DICE_DIVISOR, DICE_ORDER_MAP},
     dice_throw::DiceThrow,
     level_ordering::{ABOVE_LEVELS_5, BELOW_LEVELS_5},
     yatzy::State,
 };
 
+// This is the solver that finds which cell to put your points into when you
+// have no throws left
+// na and nb are the number of filled cells above and below the line.
 pub fn solve_layer_type1_5dice(
     na: usize,
     nb: usize,
@@ -59,7 +62,7 @@ pub fn solve_layer_type1_5dice(
                 // For a given choice of cell, looping over possible
                 // throws to find it's expected score.
                 for (new_ti, &(_, prob)) in DICE_DISTR.5.iter().enumerate() {
-                    let prob = prob as f32 / N_DICE_THROWS as f32;
+                    let prob = prob as f32 / DICE_DIVISOR[5] as f32;
 
                     expected_score +=
                         prob * prev_layer[[new_ai, new_bi, new_ti]];
@@ -73,6 +76,114 @@ pub fn solve_layer_type1_5dice(
 
             *cur_score = best_score;
             *cur_strat = best_cell_i as u8;
+        },
+    );
+
+    (scores, strats)
+}
+
+// This is the solver that finds dice to re-throw when having some number of
+// throws left
+pub fn solve_layer_type2_5dice(
+    na: usize,
+    nb: usize,
+    prev_layer_scores: &Array3<f32>,
+) -> (Array3<f32>, Array3<u8>) {
+    fn loop_rerolls<const M: usize, const N: usize>(
+        dice_distr: &[([u8; N], u32); M],
+        throw: &DiceThrow,
+        reroll: u8,
+        prev_layer_scores: &Array3<f32>,
+        ai: usize,
+        bi: usize,
+    ) -> f32 {
+        let mut expected_score = 0.0;
+        for &(rethrow, prob) in dice_distr {
+            let new_throw = throw.overwrite_reroll::<5, N>(reroll, rethrow);
+
+            let new_ti = DICE_ORDER_MAP.5[&new_throw.collect_dice()];
+
+            let prob = prob as f32 / DICE_DIVISOR[N] as f32;
+
+            expected_score += prob * prev_layer_scores[[ai, bi, new_ti]];
+        }
+        expected_score
+    }
+
+    const N_DICE_THROWS: usize = DICE_DISTR.5.len();
+
+    let n_ai = ABOVE_LEVELS_5[na].len();
+    let n_bi = BELOW_LEVELS_5[nb].len();
+
+    let shape = [n_ai, n_bi, N_DICE_THROWS];
+
+    let mut scores = Array3::zeros(shape);
+    let mut strats = Array3::zeros(shape);
+
+    Zip::indexed(&mut scores).and(&mut strats).par_for_each(
+        |(ai, bi, ti), cur_score, cur_strat| {
+            let throw = DiceThrow::from(DICE_DISTR.5[ti].0);
+
+            // This is the inner loop of which states that need to
+            // be "solved".
+
+            // Starting out with no rerolled
+            let mut best_score = prev_layer_scores[[ai, bi, ti]];
+            let mut best_reroll = 0;
+
+            // Looping over possible rerolls
+            for reroll in 1u8..32 {
+                let expected_score = match reroll.count_ones() {
+                    1 => loop_rerolls(
+                        &DICE_DISTR.1,
+                        &throw,
+                        reroll,
+                        prev_layer_scores,
+                        ai,
+                        bi,
+                    ),
+                    2 => loop_rerolls(
+                        &DICE_DISTR.2,
+                        &throw,
+                        reroll,
+                        prev_layer_scores,
+                        ai,
+                        bi,
+                    ),
+                    3 => loop_rerolls(
+                        &DICE_DISTR.3,
+                        &throw,
+                        reroll,
+                        prev_layer_scores,
+                        ai,
+                        bi,
+                    ),
+                    4 => loop_rerolls(
+                        &DICE_DISTR.4,
+                        &throw,
+                        reroll,
+                        prev_layer_scores,
+                        ai,
+                        bi,
+                    ),
+                    5 => loop_rerolls(
+                        &DICE_DISTR.5,
+                        &throw,
+                        reroll,
+                        prev_layer_scores,
+                        ai,
+                        bi,
+                    ),
+                    _ => unreachable!(),
+                };
+                if expected_score > best_score {
+                    best_score = expected_score;
+                    best_reroll = reroll;
+                }
+            }
+
+            *cur_score = best_score;
+            *cur_strat = best_reroll;
         },
     );
 

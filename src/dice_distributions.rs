@@ -4,6 +4,7 @@ use once_cell::sync::Lazy;
 
 // To make clippy happy :)
 type DiceDistributionType = (
+    (),
     [([u8; 1], u32); 6],
     [([u8; 2], u32); 21],
     [([u8; 3], u32); 56],
@@ -13,6 +14,7 @@ type DiceDistributionType = (
 );
 
 pub const DICE_DISTR: DiceDistributionType = (
+    (),
     [([1], 1), ([2], 1), ([3], 1), ([4], 1), ([5], 1), ([6], 1)],
     [
         ([1, 1], 1),
@@ -943,7 +945,10 @@ pub const DICE_DISTR: DiceDistributionType = (
     ],
 );
 
+pub const DICE_DIVISOR: [u32; 7] = [1, 6, 36, 216, 1296, 7776, 46656];
+
 type DiceOrderMapType = (
+    (),
     HashMap<[u8; 1], usize>,
     HashMap<[u8; 2], usize>,
     HashMap<[u8; 3], usize>,
@@ -960,6 +965,7 @@ pub static DICE_ORDER_MAP: Lazy<DiceOrderMapType> = Lazy::new(|| {
     }
 
     let mut map = (
+        (),
         HashMap::new(),
         HashMap::new(),
         HashMap::new(),
@@ -968,12 +974,12 @@ pub static DICE_ORDER_MAP: Lazy<DiceOrderMapType> = Lazy::new(|| {
         HashMap::new(),
     );
 
-    map.0 = dice_distr_to_map(DICE_DISTR.0);
     map.1 = dice_distr_to_map(DICE_DISTR.1);
     map.2 = dice_distr_to_map(DICE_DISTR.2);
     map.3 = dice_distr_to_map(DICE_DISTR.3);
     map.4 = dice_distr_to_map(DICE_DISTR.4);
     map.5 = dice_distr_to_map(DICE_DISTR.5);
+    map.6 = dice_distr_to_map(DICE_DISTR.6);
 
     map
 });

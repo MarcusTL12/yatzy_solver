@@ -241,11 +241,38 @@ impl DiceThrow {
         (actual_perms as f64) / (tot as f64)
     }
 
-    pub fn into_ordered_dice(&self) -> impl Iterator<Item = usize> + '_ {
+    pub fn into_ordered_dice(&self) -> impl Iterator<Item = u8> + '_ {
         self.dice
             .iter()
             .enumerate()
-            .flat_map(|(i, &amt)| (0..amt).map(move |_| i + 1))
+            .flat_map(|(i, &amt)| (0..amt).map(move |_| (i + 1) as u8))
+    }
+
+    pub fn collect_dice<const N: usize>(&self) -> [u8; N] {
+        let mut dice = [0; N];
+        for (i, d) in self.into_ordered_dice().take(N).enumerate() {
+            dice[i] = d;
+        }
+        dice
+    }
+
+    pub fn overwrite_reroll<const M: usize, const N: usize>(
+        &self,
+        mut mask: u8,
+        new_dice: [u8; N],
+    ) -> Self {
+        let mut dice: [u8; M] = self.collect_dice();
+
+        let mut j = 0;
+        for die in dice.iter_mut() {
+            if mask & 1 == 1 {
+                *die = new_dice[j];
+                j += 1;
+            }
+            mask >>= 1;
+        }
+
+        Self::from(dice)
     }
 }
 

@@ -6,6 +6,8 @@ use std::time::Instant;
 use ndarray::Array3;
 use solver::{bottom_layer_dimensions_5dice, solve_layer_type1_5dice};
 
+use crate::solver::solve_layer_type2_5dice;
+
 pub mod dice_distributions;
 pub mod dice_throw;
 pub mod level_ordering;
@@ -21,40 +23,15 @@ fn main() {
     let (scores1, _) =
         solve_layer_type1_5dice(6, 8, &Array3::zeros([0; 3]), &scores0);
 
-    let d1 = timer.elapsed();
-    println!("time = {d1:?}");
+    let d = timer.elapsed();
+    println!("time = {d:?}");
 
     let timer = Instant::now();
 
-    let (scores2, _) =
-        solve_layer_type1_5dice(6, 7, &Array3::zeros([0; 3]), &scores1);
+    let (scores2, strats2) = solve_layer_type2_5dice(6, 8, &scores1);
 
-    let d1 = timer.elapsed();
-    println!("time = {d1:?}");
-
-    let timer = Instant::now();
-
-    let (scores3, _) =
-        solve_layer_type1_5dice(6, 6, &Array3::zeros([0; 3]), &scores2);
-
-    let d1 = timer.elapsed();
-    println!("time = {d1:?}");
-
-    let timer = Instant::now();
-
-    let (scores4, _) =
-        solve_layer_type1_5dice(6, 5, &Array3::zeros([0; 3]), &scores3);
-
-    let d1 = timer.elapsed();
-    println!("time = {d1:?}");
-
-    let timer = Instant::now();
-
-    let (scores5, _) =
-        solve_layer_type1_5dice(6, 4, &Array3::zeros([0; 3]), &scores4);
-
-    let d1 = timer.elapsed();
-    println!("time = {d1:?}");
+    let d = timer.elapsed();
+    println!("time = {d:?}");
 
     // let max_score = scores
     //     .iter()
