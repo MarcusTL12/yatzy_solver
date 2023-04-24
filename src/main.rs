@@ -28,17 +28,18 @@ fn main() {
 
     let timer = Instant::now();
 
-    let (scores2, strats2) = solve_layer_type2_5dice(6, 8, &scores1);
+    let (scores2, _) = solve_layer_type2_5dice(6, 8, &scores1);
 
     let d = timer.elapsed();
     println!("time = {d:?}");
 
-    // let max_score = scores
-    //     .iter()
-    //     .max_by(|a, b| a.partial_cmp(b).unwrap())
-    //     .unwrap();
+    let timer = Instant::now();
 
-    // println!("{max_score}");
+    let (scores3, strats3) = solve_layer_type2_5dice(6, 8, &scores2);
 
-    // let state = YatzyState5::new();
+    let d = timer.elapsed();
+    println!("time = {d:?}");
+
+    println!("{scores3:5.2?}");
+    println!("{strats3:2?}");
 }
