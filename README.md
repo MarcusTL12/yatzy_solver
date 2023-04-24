@@ -220,3 +220,29 @@ continously to disk at ~150 MiB/s, it would take 22.4 GiB / 150 MiB/s = 2.5 min
 to write the previous layer to disk, giving the cpu 2.5 minutes to complete
 the current layer before we are cpu bottlenecked. At time of writing this,
 I assume that we will be cpu bottlenecked.
+
+## The process 2
+
+Dealing with a single stack of layers turned out to be a bit annoying.
+What might be easier is to a matrix of layers. A layer is then indexed by
+(na, nb, nt) where na and nb are the number of filled cells above/below the line
+respectively and nt is the number of throws left (0, 1, 2). The layer refers to
+the entire set of states fulfilling those conditions. This means within a layer
+the states are indexed by (ai, bi, ti) where ai and bi are the indices for the
+specific state above/below the line and ti is the index for the throw.
+
+The max size of one of these layers is 988 * 126 * 252 -> 150 MiB (5 dice)
+or 1113 * 3432 * 462 -> 8.2 GiB (6 dice).
+
+The dependency graph for the layers would then be that to solve layer
+(na, nb, nt) with nt > 0 access to layer (na, nb, nt - 1) is reqired, and to
+solve layer (na, nb, 0) requires access to layers
+(na - 1, nb, 2) and (na, nb - 1, 2). This puts a lower limit on the RAM
+requirement where the neighbouring layers add to the largest number. This turns
+out to be 440 MiB (5 dice) or 22.4 GiB (6 dice). However there is no way to
+use this little RAM that does not require reading from disk. The easiest scheme
+to not have to read from disk is to solve the layers "row by row" or
+"column by column" whichever requires least max RAM. This turns out to be to
+keep a "column" in memory at a time which would require 573 MiB (5 dice) or
+29.1 GiB (6 dice). This means that I might be able to run this on my personal
+desktop computer with 32 GiB of memory.

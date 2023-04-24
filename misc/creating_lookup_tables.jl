@@ -67,7 +67,7 @@ function partition_into_levels(all_combs)
 
     for (x, s) in all_combs
         n = sum(x)
-        push!(levels[n + 1], (s, collect(x)))
+        push!(levels[n+1], (s, collect(x)))
     end
 
     sort!.(levels)
@@ -110,7 +110,7 @@ function make_counts_5()
 
     for (na, ac) in above_counts, (nb, bc) in below_counts
         n = na + nb
-        all_counts[n + 1] += ac * bc
+        all_counts[n+1] += ac * bc
     end
 
     all_counts
@@ -125,7 +125,7 @@ function make_counts_6()
 
     for (na, ac) in above_counts, (nb, bc) in below_counts
         n = na + nb
-        all_counts[n + 1] += ac * bc
+        all_counts[n+1] += ac * bc
     end
 
     all_counts
@@ -137,4 +137,62 @@ end
 
 function make_naive_counts_6()
     [85 * binomial(20, i) for i in 0:20]
+end
+
+# Finding size constraints for matrix layers
+
+function find_max_size(M)
+    x = 0
+
+    for j in 1:size(M, 2)-1
+        for k in axes(M, 1)
+            y = 0
+
+            for i in 1:k
+                y += M[i, j+1]
+            end
+
+            for i in k:size(M, 1)
+                y += M[i, j]
+            end
+
+            x = max(x, y)
+        end
+    end
+
+    x
+end
+
+function find_ram(A, B, dn)
+    M = reverse!(A * B')
+
+    colby = find_max_size(M)
+    rowby = find_max_size(M')
+
+    if colby < rowby
+        println("Column")
+    else
+        println("Row")
+    end
+
+    s = min(colby, rowby)
+
+    s * dn * 5 / 1024^3
+end
+
+function find_ram_5()
+    A = [1, 36, 396, 988, 926, 383, 64]
+    B = [1, 9, 36, 84, 126, 126, 84, 36, 9, 1]
+    dn = 252
+
+    find_ram(A, B, dn)
+end
+
+function find_ram_6()
+    A = [1, 42, 483, 1113, 950, 383, 64]
+    B = [1, 14, 91, 364, 1001, 2002, 3003, 3432,
+        3003, 2002, 1001, 364, 91, 14, 1]
+    dn = 462
+
+    find_ram(A, B, dn)
 end
