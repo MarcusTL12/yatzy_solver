@@ -78,6 +78,10 @@ pub fn solve_layer_type1_5dice(
 
                             let mut expected_score = extra_score as f32;
 
+                            if extra_score > 0 {
+                                println!("{extra_score}");
+                            }
+
                             // For a given choice of cell, looping over possible
                             // throws to find it's expected score.
                             for (new_throw_i, &(_, prob)) in

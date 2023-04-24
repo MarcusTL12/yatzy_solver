@@ -2,6 +2,7 @@
 #![allow(incomplete_features)]
 
 use solver::{make_bottom_layer_5dice, solve_layer_type1_5dice};
+use yatzy::YatzyState5;
 
 pub mod dice_distributions;
 pub mod dice_throw;
@@ -13,7 +14,7 @@ pub mod yatzy;
 fn main() {
     let first_scores = make_bottom_layer_5dice();
 
-    let (scores, strats) = solve_layer_type1_5dice(15, &first_scores);
+    let (scores, strats) = solve_layer_type1_5dice(14, &first_scores);
 
     // println!("{scores:?}");
     // println!("{strats:?}");
@@ -24,4 +25,6 @@ fn main() {
         .unwrap();
 
     println!("{max_score}");
+
+    // let state = YatzyState5::new();
 }
