@@ -1,8 +1,15 @@
 // This is the generic yatzy state for either 5 or 6 dice.
 
-use crate::{dice_throw::DiceThrow, level_ordering::*, util::count_true};
+use crate::{
+    dice_throw::DiceThrow,
+    level_ordering::{
+        ABOVE_LEVELS_5_MAP, ABOVE_LEVELS_6_MAP, BELOW_LEVELS_5_MAP,
+        BELOW_LEVELS_6_MAP,
+    },
+    util::count_true,
+};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct State<const CELLS: usize> {
     pub cells: [bool; CELLS],
     pub points_above: usize,
@@ -96,14 +103,12 @@ impl YatzyState5 {
         }
     }
 
-    pub fn get_index(&self) -> usize {
-        let (above_cells, below_cells) = self.split_cells();
-        let above_ind = ABOVE_LEVELS_5_MAP[&(self.points_above, above_cells)];
-        let below_ind = BELOW_LEVELS_5_MAP[&below_cells];
+    pub fn get_above_index(&self) -> usize {
+        ABOVE_LEVELS_5_MAP[&(self.points_above, self.get_above_cells())]
+    }
 
-        let max_above = ABOVE_LEVELS_5[self.get_n_above()].len();
-
-        below_ind * max_above + above_ind
+    pub fn get_below_index(&self) -> usize {
+        BELOW_LEVELS_5_MAP[&self.get_below_cells()]
     }
 }
 
@@ -121,13 +126,11 @@ impl YatzyState6 {
         }
     }
 
-    pub fn get_index(&self) -> usize {
-        let (above_cells, below_cells) = self.split_cells();
-        let above_ind = ABOVE_LEVELS_6_MAP[&(self.points_above, above_cells)];
-        let below_ind = BELOW_LEVELS_6_MAP[&below_cells];
+    pub fn get_above_index(&self) -> usize {
+        ABOVE_LEVELS_6_MAP[&(self.points_above, self.get_above_cells())]
+    }
 
-        let max_above = ABOVE_LEVELS_6[self.get_n_above()].len();
-
-        below_ind * max_above + above_ind
+    pub fn get_below_index(&self) -> usize {
+        BELOW_LEVELS_6_MAP[&self.get_below_cells()]
     }
 }

@@ -180,6 +180,10 @@ function find_ram(A, B, dn)
     s * dn * 5 / 1024^3
 end
 
+function find_storage(A, B, dn)
+    sum(A * B') * 3 * dn * 5 / 1024^3
+end
+
 function find_ram_5()
     A = [1, 36, 396, 988, 926, 383, 64]
     B = [1, 9, 36, 84, 126, 126, 84, 36, 9, 1]
@@ -195,4 +199,21 @@ function find_ram_6()
     dn = 462
 
     find_ram(A, B, dn)
+end
+
+function find_storage_5()
+    A = [1, 36, 396, 988, 926, 383, 64]
+    B = [1, 9, 36, 84, 126, 126, 84, 36, 9, 1]
+    dn = 252
+
+    find_storage(A, B, dn)
+end
+
+function find_storage_6()
+    A = [1, 42, 483, 1113, 950, 383, 64]
+    B = [1, 14, 91, 364, 1001, 2002, 3003, 3432,
+        3003, 2002, 1001, 364, 91, 14, 1]
+    dn = 462
+
+    find_storage(A, B, dn)
 end
