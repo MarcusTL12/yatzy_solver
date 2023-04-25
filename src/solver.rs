@@ -26,7 +26,7 @@ pub fn solve_layer_type1_5dice(
     let mut scores = Array3::zeros(shape);
     let mut strats = Array3::zeros(shape);
 
-    Zip::indexed(&mut scores).and(&mut strats).par_for_each(
+    Zip::indexed(&mut scores).and(&mut strats).for_each(
         |(ai, bi, ti), cur_score, cur_strat| {
             let (points_above, above_level) = ABOVE_LEVELS_5[na][ai];
             let below_level = BELOW_LEVELS_5[nb][bi];
@@ -37,7 +37,7 @@ pub fn solve_layer_type1_5dice(
             // This is the inner loop of which states that need to
             // be "solved".
 
-            let mut best_score = -f32::INFINITY;
+            let mut best_score = 0.0;
             let mut best_cell_i = 255;
 
             // Looping over the choices to make
@@ -64,8 +64,10 @@ pub fn solve_layer_type1_5dice(
                 for (new_ti, &(_, prob)) in DICE_DISTR.5.iter().enumerate() {
                     let prob = prob as f32 / DICE_DIVISOR[5] as f32;
 
-                    expected_score +=
-                        prob * prev_layer[[new_ai, new_bi, new_ti]];
+                    expected_score += prob
+                        * prev_layer
+                            .get([new_ai, new_bi, new_ti])
+                            .unwrap_or(&0.0);
                 }
 
                 if expected_score > best_score {

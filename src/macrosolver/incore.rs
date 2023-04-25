@@ -13,8 +13,10 @@ pub fn solve_5dice() -> SolvedType {
     let mut scores = Array3::from_elem([7, 10, 3], None);
     let mut strats = Array3::from_elem([7, 10, 3], None);
 
-    for na in (0..7).rev() {
-        for nb in (0..10).rev() {
+    let global_timer = Instant::now();
+
+    for na in (5..7).rev() {
+        for nb in (8..10).rev() {
             let s0_1 = Some(Array3::zeros([0; 3]));
             let s0_2 = Some(Array3::zeros([0; 3]));
             let prev_above_layer_scores = scores
@@ -62,6 +64,9 @@ pub fn solve_5dice() -> SolvedType {
             }
         }
     }
+
+    let t = global_timer.elapsed();
+    println!("Total time: {t:6.2?}");
 
     (scores, strats)
 }
