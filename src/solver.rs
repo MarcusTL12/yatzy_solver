@@ -70,7 +70,7 @@ pub fn solve_layer_type1_5dice(
                             .unwrap_or(&0.0);
                 }
 
-                if expected_score > best_score {
+                if expected_score >= best_score {
                     best_score = expected_score;
                     best_cell_i = cell_i;
                 }
