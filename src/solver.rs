@@ -134,7 +134,7 @@ pub fn solve_layer_type2_5dice(
             let mut best_reroll = 0;
 
             // Looping over possible rerolls
-            for reroll in 1u8..32 {
+            for reroll in throw.into_mask_iter().skip(1) {
                 let expected_score = match reroll.count_ones() {
                     1 => loop_rerolls(
                         &DICE_DISTR.1,

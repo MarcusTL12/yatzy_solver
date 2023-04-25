@@ -6,10 +6,10 @@ use macrosolver::incore::solve_5dice;
 pub mod dice_distributions;
 pub mod dice_throw;
 pub mod level_ordering;
+pub mod macrosolver;
 pub mod solver;
 pub mod util;
 pub mod yatzy;
-pub mod macrosolver;
 
 fn main() {
     let (scores, _strats) = solve_5dice();

@@ -156,7 +156,9 @@ When rerolling dice you chose between one of 2^5 (or 2^6) sets of dice to
 reroll. This will both include the no-rerolling case and several identical
 cases whenever there are equal dice. However this is a small amount to
 loop over when checking (only 32/64 states), so the cost of reducing these
-is probably not worth it. For a given set of dice to be rerolled there is a
+is probably not worth it. (Actually nevermind. This turned out to have a
+quite significant time saving).
+For a given set of dice to be rerolled there is a
 well defined (and well known) probability distribution of which new set of
 dice you might end up with. For example if rerolling two dice you get the
 distribution of 1/36 chance of each combination of dice, with all the ones

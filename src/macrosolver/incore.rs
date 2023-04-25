@@ -30,7 +30,7 @@ pub fn solve_5dice() -> SolvedType {
                 .as_ref()
                 .unwrap();
 
-            println!("na: {na:2}, nb: {nb:2}, nt: 0");
+            println!("\n\nna: {na:2}, nb: {nb:2}, nt: 0");
             let timer = Instant::now();
 
             let (l_scores, l_strats) = solve_layer_type1_5dice(
@@ -47,7 +47,7 @@ pub fn solve_5dice() -> SolvedType {
             println!("Took: {t:4.2?}");
 
             for nt in 1..3 {
-                println!("na: {na:2}, nb: {nb:2}, nt: {nt}");
+                println!("\nna: {na:2}, nb: {nb:2}, nt: {nt}");
                 let timer = Instant::now();
 
                 let prev_layer_scores =
