@@ -2,9 +2,8 @@
 // to disk and can be paused and restarted.
 
 use std::{
-    fs::OpenOptions,
+    fs::{OpenOptions, create_dir_all},
     io::{Read, Write},
-    mem::transmute,
     path::Path,
     time::{Duration, Instant},
 };
@@ -29,6 +28,24 @@ pub struct Layer<const N: usize> {
     pub nt: usize,
     pub scores: Option<Array3<f32>>,
     pub strats: Option<Array3<u8>>,
+}
+
+fn floats_to_bytes(floats: &[f32]) -> &[u8] {
+    unsafe {
+        std::slice::from_raw_parts(
+            floats.as_ptr() as *const u8,
+            floats.len() * 4,
+        )
+    }
+}
+
+fn floats_to_bytes_mut(floats: &mut [f32]) -> &mut [u8] {
+    unsafe {
+        std::slice::from_raw_parts_mut(
+            floats.as_ptr() as *mut u8,
+            floats.len() * 4,
+        )
+    }
 }
 
 impl<const N: usize> Layer<N> {
@@ -63,7 +80,7 @@ impl<const N: usize> Layer<N> {
             .unwrap();
 
         let data = self.scores.as_ref().unwrap().as_slice().unwrap();
-        let bytes: &[u8] = unsafe { transmute(data) };
+        let bytes = floats_to_bytes(data);
 
         file.write_all(bytes).unwrap();
     }
@@ -103,7 +120,7 @@ impl Layer<5> {
 
             let data = scores.as_slice_mut().unwrap();
 
-            let bytes: &mut [u8] = unsafe { transmute(data) };
+            let bytes: &mut [u8] = floats_to_bytes_mut(data);
 
             file.read_exact(bytes).unwrap();
 
@@ -153,7 +170,7 @@ impl Layer<6> {
 
             let data = scores.as_slice_mut().unwrap();
 
-            let bytes: &mut [u8] = unsafe { transmute(data) };
+            let bytes: &mut [u8] = floats_to_bytes_mut(data);
 
             file.read_exact(bytes).unwrap();
 
@@ -188,6 +205,9 @@ impl Layer<6> {
 }
 
 pub fn solve_5dice() -> Array3<Option<Layer<5>>> {
+    create_dir_all(format!("{}/5/scores/", *PREFIX)).unwrap();
+    create_dir_all(format!("{}/5/strats/", *PREFIX)).unwrap();
+
     let mut layers = Array3::from_shape_fn([7, 10, 3], |(na, nb, nt)| {
         Some(Layer {
             na,
@@ -328,7 +348,7 @@ pub fn solve_5dice() -> Array3<Option<Layer<5>>> {
         }
     }
 
-    println!("Total   time: {:.2?}", global_timer.elapsed());
+    println!("\n\nTotal   time: {:.2?}", global_timer.elapsed());
     println!("Compute time: {compute_timer:.2?}");
     println!("Loading time: {load_timer:.2?}");
     println!("Saving  time: {save_timer:.2?}");
