@@ -2,7 +2,7 @@
 // to disk and can be paused and restarted.
 
 use std::{
-    fs::{OpenOptions, create_dir_all},
+    fs::{create_dir_all, OpenOptions},
     io::{Read, Write},
     path::Path,
     time::{Duration, Instant},
@@ -204,11 +204,8 @@ impl Layer<6> {
     }
 }
 
-pub fn solve_5dice() -> Array3<Option<Layer<5>>> {
-    create_dir_all(format!("{}/5/scores/", *PREFIX)).unwrap();
-    create_dir_all(format!("{}/5/strats/", *PREFIX)).unwrap();
-
-    let mut layers = Array3::from_shape_fn([7, 10, 3], |(na, nb, nt)| {
+pub fn make_thin_layers_5dice() -> Array3<Option<Layer<5>>> {
+    Array3::from_shape_fn([7, 10, 3], |(na, nb, nt)| {
         Some(Layer {
             na,
             nb,
@@ -216,7 +213,14 @@ pub fn solve_5dice() -> Array3<Option<Layer<5>>> {
             scores: None,
             strats: None,
         })
-    });
+    })
+}
+
+pub fn solve_5dice() {
+    create_dir_all(format!("{}/5/scores/", *PREFIX)).unwrap();
+    create_dir_all(format!("{}/5/strats/", *PREFIX)).unwrap();
+
+    let mut layers = make_thin_layers_5dice();
 
     let global_timer = Instant::now();
     let mut load_timer = Duration::ZERO;
@@ -352,6 +356,4 @@ pub fn solve_5dice() -> Array3<Option<Layer<5>>> {
     println!("Compute time: {compute_timer:.2?}");
     println!("Loading time: {load_timer:.2?}");
     println!("Saving  time: {save_timer:.2?}");
-
-    layers
 }
