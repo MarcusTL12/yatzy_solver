@@ -15,8 +15,8 @@ pub fn solve_5dice() -> SolvedType {
 
     let global_timer = Instant::now();
 
-    for na in (5..7).rev() {
-        for nb in (8..10).rev() {
+    for na in (0..7).rev() {
+        for nb in (0..10).rev() {
             let s0_1 = Some(Array3::zeros([0; 3]));
             let s0_2 = Some(Array3::zeros([0; 3]));
             let prev_above_layer_scores = scores

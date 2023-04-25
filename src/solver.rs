@@ -26,7 +26,7 @@ pub fn solve_layer_type1_5dice(
     let mut scores = Array3::zeros(shape);
     let mut strats = Array3::zeros(shape);
 
-    Zip::indexed(&mut scores).and(&mut strats).for_each(
+    Zip::indexed(&mut scores).and(&mut strats).par_for_each(
         |(ai, bi, ti), cur_score, cur_strat| {
             let (points_above, above_level) = ABOVE_LEVELS_5[na][ai];
             let below_level = BELOW_LEVELS_5[nb][bi];

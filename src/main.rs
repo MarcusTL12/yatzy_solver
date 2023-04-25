@@ -14,5 +14,5 @@ pub mod yatzy;
 fn main() {
     let (scores, _strats) = solve_5dice();
 
-    println!("{:5.2?}", scores[[5, 8, 2]].as_ref().unwrap());
+    println!("{:5.2?}", scores[[0, 0, 2]].as_ref().unwrap());
 }
