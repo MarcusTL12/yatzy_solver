@@ -3,8 +3,8 @@
 use crate::{
     dice_throw::DiceThrow,
     level_ordering::{
-        ABOVE_LEVELS_5_MAP, ABOVE_LEVELS_6_MAP, BELOW_LEVELS_5_MAP,
-        BELOW_LEVELS_6_MAP,
+        points_above, ABOVE_LEVELS_5_MAP, ABOVE_LEVELS_6_MAP,
+        BELOW_LEVELS_5_MAP, BELOW_LEVELS_6_MAP,
     },
     util::count_true,
 };
@@ -104,7 +104,9 @@ impl YatzyState5 {
     }
 
     pub fn get_above_index(&self) -> usize {
-        ABOVE_LEVELS_5_MAP[&(self.points_above, self.get_above_cells())]
+        let pts = points_above::<5>().min(self.points_above as i32) as usize;
+
+        ABOVE_LEVELS_5_MAP[&(pts, self.get_above_cells())]
     }
 
     pub fn get_below_index(&self) -> usize {
@@ -127,7 +129,9 @@ impl YatzyState6 {
     }
 
     pub fn get_above_index(&self) -> usize {
-        ABOVE_LEVELS_6_MAP[&(self.points_above, self.get_above_cells())]
+        let pts = points_above::<6>().min(self.points_above as i32) as usize;
+
+        ABOVE_LEVELS_6_MAP[&(pts, self.get_above_cells())]
     }
 
     pub fn get_below_index(&self) -> usize {

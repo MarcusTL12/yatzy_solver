@@ -6,7 +6,7 @@ use std::{
 use itertools::iproduct;
 use once_cell::sync::Lazy;
 
-const fn points_above<const N: i32>() -> i32 {
+pub const fn points_above<const N: i32>() -> i32 {
     match N {
         5 => 63,
         6 => 84,
