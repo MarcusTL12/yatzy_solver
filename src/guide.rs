@@ -223,6 +223,18 @@ fn get_byte_from_file(filename: &str, index: usize) -> u8 {
     buf[0]
 }
 
+fn get_float_from_file(filename: &str, index: usize) -> f32 {
+    let mut file = OpenOptions::new().read(true).open(filename).unwrap();
+
+    file.seek(SeekFrom::Start((index * 4) as u64)).unwrap();
+
+    let mut buf = [0; 4];
+
+    file.read_exact(&mut buf).unwrap();
+
+    f32::from_le_bytes(buf)
+}
+
 fn get_cell_strat<const N: usize>(
     cells: &[bool],
     dice: &DiceThrow,
@@ -282,17 +294,32 @@ fn get_rethrow_strat<const N: usize>(
     get_byte_from_file(&layer.strats_path(), total_index)
 }
 
-fn new_throw(throw: &DiceThrow, mask: u8, rethrow: DiceThrow) -> DiceThrow {
-    todo!()
-}
-
 fn get_score<const N: usize>(
     cells: &[bool],
     dice: &DiceThrow,
     points_above: usize,
     throws_left: usize,
 ) -> f32 {
-    todo!()
+    let [na, nb, _, lb, ai, bi] = match N {
+        5 => get_state_indices5(cells, points_above),
+        6 => get_state_indices6(cells, points_above),
+        _ => panic!(),
+    };
+
+    let lt = amt_dice_combinations::<N>();
+    let ti = dice.get_index();
+
+    let total_index = (ai * lb + bi) * lt + ti;
+
+    let layer = Layer::<N> {
+        na,
+        nb,
+        nt: throws_left,
+        scores: None,
+        strats: None,
+    };
+
+    get_float_from_file(&layer.scores_path(), total_index)
 }
 
 fn get_total_score<const N: usize>(points: &[Option<usize>]) -> usize {
@@ -422,16 +449,31 @@ where
                         points_above,
                     );
 
-                    println!("Rethrowing:\n{}", reroll);
+                    println!("Rethrowing:\n{}", last_dice.get_subthrow(reroll));
 
                     let rethrow =
                         DiceThrow::throw(reroll.count_ones() as usize);
 
-                    last_dice = new_throw(&last_dice, reroll, rethrow);
+                    last_dice = last_dice.overwrite_reroll_dyn::<N>(
+                        reroll,
+                        &rethrow.into_ordered_dice().collect::<Vec<_>>(),
+                    );
 
                     println!("To give:\n{}", last_dice);
                     throws_left -= 1;
                 }
+
+                let rem_score = get_score::<N>(
+                    &filled_cells,
+                    &last_dice,
+                    points_above,
+                    throws_left,
+                );
+
+                let tot_score =
+                    get_total_score::<N>(&points) as f32 + rem_score;
+
+                println!("expected total score is now {:.2}", tot_score);
             }
             ["advise", dice_left, dice] => {
                 let throws_left: usize = dice_left.parse().unwrap();
@@ -469,7 +511,7 @@ where
                         );
                     }
                     1 | 2 => {
-                        let rethrow = get_rethrow_strat::<N>(
+                        let reroll = get_rethrow_strat::<N>(
                             &filled_cells,
                             &throw,
                             throws_left,
@@ -478,19 +520,19 @@ where
 
                         println!(
                             "Rethrow:\n{}",
-                            last_dice.get_subthrow(rethrow)
+                            last_dice.get_subthrow(reroll)
                         );
                     }
                     _ => unreachable!(),
                 }
             }
-            ["expected-remaining"] => {
-                let free_cells: Vec<_> =
-                    points.iter().map(|x| x.is_none()).collect();
+            ["expected-remaining" | "ex-r"] => {
+                let filled_cells: Vec<_> =
+                    points.iter().map(|x| x.is_some()).collect();
                 let points_above =
                     points.iter().take(6).filter_map(|x| x.as_ref()).sum();
                 let rem_score = get_score::<N>(
-                    &free_cells,
+                    &filled_cells,
                     &last_dice,
                     points_above,
                     throws_left,
@@ -498,13 +540,13 @@ where
 
                 println!("expected remaining score is {}", rem_score);
             }
-            ["expected-total"] => {
-                let free_cells: Vec<_> =
-                    points.iter().map(|x| x.is_none()).collect();
+            ["expected-total" | "ex-t"] => {
+                let filled_cells: Vec<_> =
+                    points.iter().map(|x| x.is_some()).collect();
                 let points_above =
                     points.iter().take(6).filter_map(|x| x.as_ref()).sum();
                 let rem_score = get_score::<N>(
-                    &free_cells,
+                    &filled_cells,
                     &last_dice,
                     points_above,
                     throws_left,
