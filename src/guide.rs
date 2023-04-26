@@ -463,6 +463,12 @@ where
                     throws_left -= 1;
                 }
 
+                let filled_cells: Vec<_> =
+                    points.iter().map(|x| x.is_some()).collect();
+
+                let points_above =
+                    points.iter().take(6).filter_map(|x| x.as_ref()).sum();
+
                 let rem_score = get_score::<N>(
                     &filled_cells,
                     &last_dice,
