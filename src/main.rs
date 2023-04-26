@@ -3,6 +3,7 @@
 
 use std::env;
 
+use guide::start;
 use macrosolver::outcore::solve_5dice;
 
 pub mod dice_distributions;
@@ -18,7 +19,7 @@ fn main() {
     let args: Vec<_> = env::args().collect();
 
     match args.get(1).unwrap_or(&"".to_owned()).as_str() {
-        "guide-5" => {}
+        "guide-5" => start::<5>(),
         "compute-strats-5" => solve_5dice(),
         _ => panic!(),
     }

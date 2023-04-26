@@ -275,6 +275,25 @@ impl DiceThrow {
         Self::from(dice)
     }
 
+    pub fn overwrite_reroll_dyn<const M: usize>(
+        &self,
+        mut mask: u8,
+        new_dice: &[u8],
+    ) -> Self {
+        let mut dice: [u8; M] = self.collect_dice();
+
+        let mut j = 0;
+        for die in dice.iter_mut() {
+            if mask & 1 == 1 {
+                *die = new_dice[j];
+                j += 1;
+            }
+            mask >>= 1;
+        }
+
+        Self::from(dice)
+    }
+
     pub fn get_mask(&self, mut sub_throw: DiceThrow) -> u8 {
         let mut mask = 0;
 

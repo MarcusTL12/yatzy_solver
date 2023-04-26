@@ -5,19 +5,22 @@ use crate::dice_throw::DiceThrow;
 const HELP_MSG: &str = r#"
 commands:
 help: displays this message
+help cell names: display the name legend for cells
 exit/q: exit
 display points: display your points
 set points <cell> <points>: set a cell to a value. Get cell names by
     help cell names
+put dice <cell>: put the current dice into the cell.
 clear points <cell>: clears points
 advise <dice-left> <dice>: gives advice on what to do with the dice
-throw dice <N>: prints a dice throw of <N> dice
+throw <N>: prints a dice throw of <N> dice
+auto: automatically perform the next optimal move
 "#;
 
-pub const HELP_CELL_NAMES: &str = r#"
+const HELP_CELL_NAMES: &str = r#"
 ones/enere...       => 1s - 6s
 pairs/par           => 1p - 3p
-of a kind / like    => 1l - 5l
+of a kind / like    => 1l - 6l
 straight            => ls, ss, fs
 hut/hytte           => ht
 house/hus           => hs
@@ -42,12 +45,12 @@ fn display_points<const N: usize>(
     prec_sum: Option<usize>,
 ) {
     let ind = &mut 0;
-    println!("ones              = {}", tostr(points, ind));
-    println!("twos              = {}", tostr(points, ind));
-    println!("threes            = {}", tostr(points, ind));
-    println!("fours             = {}", tostr(points, ind));
-    println!("fives             = {}", tostr(points, ind));
-    println!("sixes             = {}", tostr(points, ind));
+    println!("ones              (1s) = {}", tostr(points, ind));
+    println!("twos              (2s) = {}", tostr(points, ind));
+    println!("threes            (3s) = {}", tostr(points, ind));
+    println!("fours             (4s) = {}", tostr(points, ind));
+    println!("fives             (5s) = {}", tostr(points, ind));
+    println!("sixes             (6s) = {}", tostr(points, ind));
     println!("------------------------------------");
     let above: usize = points.iter().take(6).filter_map(|x| x.as_ref()).sum();
     let bonus_objective = match N {
@@ -73,33 +76,33 @@ fn display_points<const N: usize>(
         (0..bonus).map(|_| 1).sum()
     };
 
-    println!("sum               = {}", above);
-    println!("bonus             = {}", bonus);
-    println!("1 pair            = {}", tostr(points, ind));
-    println!("2 pair            = {}", tostr(points, ind));
+    println!("sum                    = {}", above);
+    println!("bonus                  = {}", bonus);
+    println!("1 pair            (1p) = {}", tostr(points, ind));
+    println!("2 pair            (2p) = {}", tostr(points, ind));
     if N == 6 {
-        println!("3 pair            = {}", tostr(points, ind));
+        println!("3 pair            (3p) = {}", tostr(points, ind));
     }
-    println!("3 of a kind       = {}", tostr(points, ind));
-    println!("4 of a kind       = {}", tostr(points, ind));
+    println!("3 of a kind       (3l) = {}", tostr(points, ind));
+    println!("4 of a kind       (4l) = {}", tostr(points, ind));
     if N == 6 {
-        println!("5 of a kind       = {}", tostr(points, ind));
+        println!("5 of a kind       (5l) = {}", tostr(points, ind));
     }
-    println!("small straight    = {}", tostr(points, ind));
-    println!("large straight    = {}", tostr(points, ind));
+    println!("small straight    (ls) = {}", tostr(points, ind));
+    println!("large straight    (ss) = {}", tostr(points, ind));
     if N == 6 {
-        println!("full straight     = {}", tostr(points, ind));
-        println!("hut               = {}", tostr(points, ind));
+        println!("full straight     (fs) = {}", tostr(points, ind));
+        println!("hut               (ht) = {}", tostr(points, ind));
     }
-    println!("house             = {}", tostr(points, ind));
+    println!("house             (hs) = {}", tostr(points, ind));
     if N == 6 {
-        println!("tower             = {}", tostr(points, ind));
+        println!("tower             (tr) = {}", tostr(points, ind));
     }
-    println!("chance            = {}", tostr(points, ind));
-    println!("yahtzee           = {}", tostr(points, ind));
+    println!("chance         (sj/ch) = {}", tostr(points, ind));
+    println!("yatzy             (yz) = {}", tostr(points, ind));
     println!("------------------------------------");
     println!(
-        "Total             = {}\n",
+        "Total                  = {}\n",
         if let Some(s) = prec_sum {
             s
         } else {
@@ -162,7 +165,7 @@ fn get_index_name<const N: usize>(ind: usize) -> &'static str {
         (5, 12) | (6, 16) => "house",
         (6, 17) => "tower",
         (5, 13) | (6, 18) => "chance",
-        (5, 14) | (6, 19) => "yahtzee",
+        (5, 14) | (6, 19) => "yatzy",
         _ => unreachable!(),
     }
 }
@@ -188,50 +191,39 @@ fn new_throw(throw: &DiceThrow, mask: u8, rethrow: DiceThrow) -> DiceThrow {
     todo!()
 }
 
-// fn get_score<const N: usize>(
-//     cells: &[bool],
-//     dice: &DiceThrow,
-//     points_above: u64,
-//     throws_left: usize,
-// ) -> f32 {
-//     let free_cells = cells.iter().map(|&x| x).count();
-//     let ans = {
-//         Command::new("7z")
-//             .arg("x")
-//             .arg(Path::new(&*SCORES_PATH).join(format!("{}/scores.7z", N)))
-//             .arg(format!(
-//                 "{}_{}/{}.bin",
-//                 free_cells, throws_left, points_above
-//             ))
-//             .arg(format!("-otmp/{}/scores/", N))
-//             .output()
-//             .unwrap();
+fn get_score<const N: usize>(
+    cells: &[bool],
+    dice: &DiceThrow,
+    points_above: usize,
+    throws_left: usize,
+) -> f32 {
+    todo!()
+}
 
-//         let &cell_ind =
-//             CELLS[n_to_ind::<N>()].1[free_cells].get(cells).unwrap();
-//         let ind = get_index::<N>(dice, cell_ind);
+fn get_total_score<const N: usize>(points: &[Option<usize>]) -> usize {
+    let points_above: usize =
+        points.iter().take(6).filter_map(|x| x.as_ref()).sum();
 
-//         let mut f = File::open(format!(
-//             "./tmp/{}/scores/{}_{}/{}.bin",
-//             N, free_cells, throws_left, points_above
-//         ))
-//         .unwrap();
+    let bonus_objective = match N {
+        5 => 63,
+        6 => 84,
+        _ => unreachable!(),
+    };
 
-//         f.seek(SeekFrom::Start(ind as u64 * 4)).unwrap();
-//         let mut bytes = [0; 4];
-//         f.read(&mut bytes).unwrap();
+    let bonus = if points_above >= bonus_objective {
+        match N {
+            5 => 50,
+            6 => 100,
+            _ => unreachable!(),
+        }
+    } else {
+        0
+    };
 
-//         f32::from_le_bytes(bytes)
-//     };
+    let total = bonus + points.iter().filter_map(|x| x.as_ref()).sum::<usize>();
 
-//     remove_file(format!(
-//         "./tmp/{}/scores/{}_{}/{}.bin",
-//         N, free_cells, throws_left, points_above
-//     ))
-//     .unwrap();
-
-//     ans
-// }
+    total
+}
 
 pub fn start<const N: usize>() {
     println!(
@@ -252,8 +244,9 @@ pub fn start<const N: usize>() {
     let mut throws_left = 2;
 
     println!("Starting throw:\n{}", last_dice);
+    println!("Throws left: {throws_left}");
 
-    loop {
+    'outer: loop {
         print!("> ");
         stdout().flush().unwrap();
         let mut buffer = String::new();
@@ -272,18 +265,25 @@ pub fn start<const N: usize>() {
                 points[index] = Some(pts);
                 display_points::<N>(&points, None, None);
             }
+            ["put", "dice", cell] => {
+                let index = get_yatzy_index::<N>(cell);
+                let pts = last_dice.cell_score::<N>(index);
+                points[index] = Some(pts);
+                display_points::<N>(&points, None, None);
+                throws_left = 2;
+                last_dice = DiceThrow::throw(N);
+                println!("Current dice:\n{}", last_dice);
+                println!("Throws left: {throws_left}");
+            }
             ["clear", "points", cell] => {
                 let index = get_yatzy_index::<N>(cell);
 
                 points[index] = None;
             }
-            ["throw", "dice", n] => {
+            ["throw", n] => {
                 let n = n.parse().unwrap();
-
                 let throw = DiceThrow::throw(n);
-
                 println!("{}", throw);
-
                 last_dice = throw;
             }
             ["auto"] => {
@@ -382,37 +382,37 @@ pub fn start<const N: usize>() {
                     _ => unreachable!(),
                 }
             }
-            // ["expected-remaining"] => {
-            //     let free_cells: Vec<_> =
-            //         points.iter().map(|x| x.is_none()).collect();
-            //     let points_above =
-            //         points.iter().take(6).filter_map(|x| x.as_ref()).sum();
-            //     let rem_score = get_score::<N>(
-            //         &free_cells,
-            //         &last_dice,
-            //         points_above,
-            //         throws_left,
-            //     );
+            ["expected-remaining"] => {
+                let free_cells: Vec<_> =
+                    points.iter().map(|x| x.is_none()).collect();
+                let points_above =
+                    points.iter().take(6).filter_map(|x| x.as_ref()).sum();
+                let rem_score = get_score::<N>(
+                    &free_cells,
+                    &last_dice,
+                    points_above,
+                    throws_left,
+                );
 
-            //     println!("expected remaining score is {}", rem_score);
-            // }
-            // ["expected-total"] => {
-            //     let free_cells: Vec<_> =
-            //         points.iter().map(|x| x.is_none()).collect();
-            //     let points_above =
-            //         points.iter().take(6).filter_map(|x| x.as_ref()).sum();
-            //     let rem_score = get_score::<N>(
-            //         &free_cells,
-            //         &last_dice,
-            //         points_above,
-            //         throws_left,
-            //     );
+                println!("expected remaining score is {}", rem_score);
+            }
+            ["expected-total"] => {
+                let free_cells: Vec<_> =
+                    points.iter().map(|x| x.is_none()).collect();
+                let points_above =
+                    points.iter().take(6).filter_map(|x| x.as_ref()).sum();
+                let rem_score = get_score::<N>(
+                    &free_cells,
+                    &last_dice,
+                    points_above,
+                    throws_left,
+                );
 
-            //     let tot_score =
-            //         get_total_score::<N>(&points) as f32 + rem_score;
+                let tot_score =
+                    get_total_score::<N>(&points) as f32 + rem_score;
 
-            //     println!("expected total score is {}", tot_score);
-            // }
+                println!("expected total score is {}", tot_score);
+            }
             ["reset"] => {
                 points = vec![
                     None;
@@ -426,6 +426,42 @@ pub fn start<const N: usize>() {
                 throws_left = 2;
 
                 println!("Starting throw:\n{}", last_dice);
+            }
+            ["rethrow", mask_str] => {
+                if throws_left == 0 {
+                    println!("No throws left!");
+                    continue 'outer;
+                }
+
+                if mask_str.len() != N {
+                    println!("Invalid mask!");
+                    continue 'outer;
+                }
+
+                let mut mask: u8 = 0;
+                for c in mask_str.chars().rev() {
+                    let bit = match c {
+                        '0' => 0,
+                        '1' => 1,
+                        _ => {
+                            println!("Invalid mask!");
+                            continue 'outer;
+                        }
+                    };
+
+                    mask = mask << 1 | bit;
+                }
+
+                let rethrow: Vec<_> =
+                    DiceThrow::throw(mask.count_ones() as usize)
+                        .into_ordered_dice()
+                        .collect();
+
+                last_dice = last_dice.overwrite_reroll_dyn::<N>(mask, &rethrow);
+                throws_left -= 1;
+
+                println!("New throw:\n{}", last_dice);
+                println!("Throws left: {throws_left}");
             }
             _ => println!("Invalid command! {:?}", command),
         }
