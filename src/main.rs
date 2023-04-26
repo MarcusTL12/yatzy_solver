@@ -1,17 +1,19 @@
 #![feature(array_zip, split_array, generic_const_exprs)]
 #![allow(incomplete_features)]
 
-use std::env;
+use std::{env, time::Instant};
 
 use dice_distributions::{DICE_DISTR, DICE_DIVISOR};
 use guide::start;
 use macrosolver::outcore::{solve_5dice, Layer};
+use simulation::simulate_n_5;
 
 pub mod dice_distributions;
 pub mod dice_throw;
 pub mod guide;
 pub mod level_ordering;
 pub mod macrosolver;
+pub mod simulation;
 pub mod solver;
 pub mod util;
 pub mod yatzy;
@@ -43,6 +45,16 @@ fn main() {
             }
 
             println!("Expected score for 5 dice: {score:.2}");
+        }
+        "simulate-5" => {
+            let mut scores = vec![0; args[2].parse().unwrap()];
+
+            let timer = Instant::now();
+            simulate_n_5(&mut scores);
+            let t = timer.elapsed();
+
+            println!("time: {t:.2?}");
+            println!("{scores:?}");
         }
         _ => panic!(),
     }

@@ -181,7 +181,7 @@ fn get_index_name<const N: usize>(ind: usize) -> &'static str {
     }
 }
 
-fn get_state_indices5(cells: &[bool], points_above: usize) -> [usize; 6] {
+pub fn get_state_indices5(cells: &[bool], points_above: usize) -> [usize; 6] {
     let state = State::<15>::from_dyn(cells, points_above);
 
     let na = state.get_n_above();
@@ -196,7 +196,7 @@ fn get_state_indices5(cells: &[bool], points_above: usize) -> [usize; 6] {
     [na, nb, la, lb, ai, bi]
 }
 
-fn get_state_indices6(cells: &[bool], points_above: usize) -> [usize; 6] {
+pub fn get_state_indices6(cells: &[bool], points_above: usize) -> [usize; 6] {
     let state = State::<20>::from_dyn(cells, points_above);
 
     let na = state.get_n_above();
@@ -322,7 +322,7 @@ fn get_score<const N: usize>(
     get_float_from_file(&layer.scores_path(), total_index)
 }
 
-fn get_total_score<const N: usize>(points: &[Option<usize>]) -> usize {
+pub fn get_total_score<const N: usize>(points: &[Option<usize>]) -> usize {
     let points_above: usize =
         points.iter().take(6).filter_map(|x| x.as_ref()).sum();
 
@@ -366,10 +366,10 @@ where
         }
     ];
 
-    let mut last_dice = DiceThrow::throw(N);
+    let mut dice = DiceThrow::throw(N);
     let mut throws_left = 2;
 
-    println!("Starting throw:\n{}", last_dice);
+    println!("Starting throw:\n{}", dice);
     println!("Throws left: {throws_left}");
 
     'outer: loop {
@@ -393,12 +393,12 @@ where
             }
             ["put", "dice", cell] => {
                 let index = get_yatzy_index::<N>(cell);
-                let pts = last_dice.cell_score::<N>(index);
+                let pts = dice.cell_score::<N>(index);
                 points[index] = Some(pts);
                 display_points::<N>(&points, None, None);
                 throws_left = 2;
-                last_dice = DiceThrow::throw(N);
-                println!("Current dice:\n{}", last_dice);
+                dice = DiceThrow::throw(N);
+                println!("Current dice:\n{}", dice);
                 println!("Throws left: {throws_left}");
             }
             ["clear", "points", cell] => {
@@ -410,7 +410,7 @@ where
                 let n = n.parse().unwrap();
                 let throw = DiceThrow::throw(n);
                 println!("{}", throw);
-                last_dice = throw;
+                dice = throw;
             }
             ["auto"] => {
                 let filled_cells: Vec<_> =
@@ -420,13 +420,10 @@ where
                     points.iter().take(6).filter_map(|x| x.as_ref()).sum();
 
                 if throws_left == 0 {
-                    let ind = get_cell_strat::<N>(
-                        &filled_cells,
-                        &last_dice,
-                        points_above,
-                    );
+                    let ind =
+                        get_cell_strat::<N>(&filled_cells, &dice, points_above);
 
-                    let score = last_dice.cell_score::<N>(ind);
+                    let score = dice.cell_score::<N>(ind);
 
                     println!(
                         "Putting {} points in {}.",
@@ -437,29 +434,29 @@ where
                     points[ind] = Some(score);
                     display_points::<N>(&points, None, None);
 
-                    last_dice = DiceThrow::throw(N);
+                    dice = DiceThrow::throw(N);
                     throws_left = 2;
 
-                    println!("New throw:\n{}", last_dice);
+                    println!("New throw:\n{}", dice);
                 } else {
                     let reroll = get_rethrow_strat::<N>(
                         &filled_cells,
-                        &last_dice,
+                        &dice,
                         throws_left,
                         points_above,
                     );
 
-                    println!("Rethrowing:\n{}", last_dice.get_subthrow(reroll));
+                    println!("Rethrowing:\n{}", dice.get_subthrow(reroll));
 
                     let rethrow =
                         DiceThrow::throw(reroll.count_ones() as usize);
 
-                    last_dice = last_dice.overwrite_reroll_dyn::<N>(
+                    dice = dice.overwrite_reroll_dyn::<N>(
                         reroll,
                         &rethrow.into_ordered_dice().collect::<Vec<_>>(),
                     );
 
-                    println!("To give:\n{}", last_dice);
+                    println!("To give:\n{}", dice);
                     throws_left -= 1;
                 }
 
@@ -471,7 +468,7 @@ where
 
                 let rem_score = get_score::<N>(
                     &filled_cells,
-                    &last_dice,
+                    &dice,
                     points_above,
                     throws_left,
                 );
@@ -481,13 +478,13 @@ where
 
                 println!("expected total score is now {:.2}", tot_score);
             }
-            ["advise", dice_left, dice] => {
+            ["advise", dice_left, dice_str] => {
                 let throws_left: usize = dice_left.parse().unwrap();
-                if dice.len() != N {
+                if dice_str.len() != N {
                     continue 'outer;
                 }
                 let mut throw = DiceThrow::from([0usize; 6]);
-                for c in dice.chars() {
+                for c in dice_str.chars() {
                     let i = (c as u8 - b'0') as usize;
                     throw[i] += 1;
                 }
@@ -524,10 +521,7 @@ where
                             points_above,
                         );
 
-                        println!(
-                            "Rethrow:\n{}",
-                            last_dice.get_subthrow(reroll)
-                        );
+                        println!("Rethrow:\n{}", dice.get_subthrow(reroll));
                     }
                     _ => unreachable!(),
                 }
@@ -539,7 +533,7 @@ where
                     points.iter().take(6).filter_map(|x| x.as_ref()).sum();
                 let rem_score = get_score::<N>(
                     &filled_cells,
-                    &last_dice,
+                    &dice,
                     points_above,
                     throws_left,
                 );
@@ -553,7 +547,7 @@ where
                     points.iter().take(6).filter_map(|x| x.as_ref()).sum();
                 let rem_score = get_score::<N>(
                     &filled_cells,
-                    &last_dice,
+                    &dice,
                     points_above,
                     throws_left,
                 );
@@ -572,10 +566,10 @@ where
                         _ => unreachable!(),
                     }
                 ];
-                last_dice = DiceThrow::throw(N);
+                dice = DiceThrow::throw(N);
                 throws_left = 2;
 
-                println!("Starting throw:\n{}", last_dice);
+                println!("Starting throw:\n{}", dice);
             }
             ["rethrow", mask_str] => {
                 if throws_left == 0 {
@@ -607,10 +601,10 @@ where
                         .into_ordered_dice()
                         .collect();
 
-                last_dice = last_dice.overwrite_reroll_dyn::<N>(mask, &rethrow);
+                dice = dice.overwrite_reroll_dyn::<N>(mask, &rethrow);
                 throws_left -= 1;
 
-                println!("New throw:\n{}", last_dice);
+                println!("New throw:\n{}", dice);
                 println!("Throws left: {throws_left}");
             }
             _ => println!("Invalid command! {:?}", command),
