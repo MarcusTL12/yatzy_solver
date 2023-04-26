@@ -5,6 +5,8 @@ use std::{
 
 use rand::prelude::*;
 
+use crate::dice_distributions::DICE_ORDER_MAP;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct DiceThrow {
     dice: [usize; 6],
@@ -246,6 +248,47 @@ impl DiceThrow {
             .iter()
             .enumerate()
             .flat_map(|(i, &amt)| (0..amt).map(move |_| (i + 1) as u8))
+    }
+
+    pub fn into_ordered_dice_const<const N: usize>(&self) -> [u8; N] {
+        let mut dice = [0; N];
+
+        for (x, y) in dice.iter_mut().zip(self.into_ordered_dice()) {
+            *x = y;
+        }
+
+        dice
+    }
+
+    pub fn get_index(&self) -> usize {
+        match self.amt_dice() {
+            0 => 0,
+            1 => {
+                let dice = self.into_ordered_dice_const::<1>();
+                DICE_ORDER_MAP.1[&dice]
+            }
+            2 => {
+                let dice = self.into_ordered_dice_const::<2>();
+                DICE_ORDER_MAP.2[&dice]
+            }
+            3 => {
+                let dice = self.into_ordered_dice_const::<3>();
+                DICE_ORDER_MAP.3[&dice]
+            }
+            4 => {
+                let dice = self.into_ordered_dice_const::<4>();
+                DICE_ORDER_MAP.4[&dice]
+            }
+            5 => {
+                let dice = self.into_ordered_dice_const::<5>();
+                DICE_ORDER_MAP.5[&dice]
+            }
+            6 => {
+                let dice = self.into_ordered_dice_const::<6>();
+                DICE_ORDER_MAP.6[&dice]
+            }
+            _ => panic!("Unsupported amount of dice!"),
+        }
     }
 
     pub fn collect_dice<const N: usize>(&self) -> [u8; N] {

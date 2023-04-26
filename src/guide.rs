@@ -1,6 +1,17 @@
-use std::io::{stdin, stdout, Write};
+use std::{
+    fs::OpenOptions,
+    io::{stdin, stdout, Read, Seek, SeekFrom, Write},
+};
 
-use crate::dice_throw::DiceThrow;
+use crate::{
+    dice_distributions::amt_dice_combinations,
+    dice_throw::DiceThrow,
+    level_ordering::{
+        ABOVE_LEVELS_5, ABOVE_LEVELS_6, BELOW_LEVELS_5, BELOW_LEVELS_6,
+    },
+    macrosolver::outcore::Layer,
+    yatzy::{cell_from_dice, State},
+};
 
 const HELP_MSG: &str = r#"
 commands:
@@ -170,12 +181,77 @@ fn get_index_name<const N: usize>(ind: usize) -> &'static str {
     }
 }
 
+fn get_state_indices5(cells: &[bool], points_above: usize) -> [usize; 6] {
+    let state = State::<15>::from_dyn(cells, points_above);
+
+    let na = state.get_n_above();
+    let nb = state.get_n_below();
+
+    let la = ABOVE_LEVELS_5[na].len();
+    let lb = BELOW_LEVELS_5[nb].len();
+
+    let ai = state.get_above_index();
+    let bi = state.get_below_index();
+
+    [na, nb, la, lb, ai, bi]
+}
+
+fn get_state_indices6(cells: &[bool], points_above: usize) -> [usize; 6] {
+    let state = State::<20>::from_dyn(cells, points_above);
+
+    let na = state.get_n_above();
+    let nb = state.get_n_below();
+
+    let la = ABOVE_LEVELS_6[na].len();
+    let lb = BELOW_LEVELS_6[nb].len();
+
+    let ai = state.get_above_index();
+    let bi = state.get_below_index();
+
+    [na, nb, la, lb, ai, bi]
+}
+
+fn get_byte_from_file(filename: &str, index: usize) -> u8 {
+    let mut file = OpenOptions::new().read(true).open(filename).unwrap();
+
+    file.seek(SeekFrom::Start(index as u64)).unwrap();
+
+    let mut buf = [0];
+
+    file.read_exact(&mut buf).unwrap();
+
+    buf[0]
+}
+
 fn get_cell_strat<const N: usize>(
     cells: &[bool],
     dice: &DiceThrow,
     points_above: usize,
-) -> usize {
-    todo!()
+) -> usize
+where
+    [(); cell_from_dice::<N>()]:,
+    [(); cell_from_dice::<N>() - 6]:,
+{
+    let [na, nb, _, lb, ai, bi] = match N {
+        5 => get_state_indices5(cells, points_above),
+        6 => get_state_indices6(cells, points_above),
+        _ => panic!(),
+    };
+
+    let lt = amt_dice_combinations::<N>();
+    let ti = dice.get_index();
+
+    let total_index = (ai * lb + bi) * lt + ti;
+
+    let layer = Layer::<N> {
+        na,
+        nb,
+        nt: 0,
+        scores: None,
+        strats: None,
+    };
+
+    get_byte_from_file(&layer.strats_path(), total_index) as usize
 }
 
 fn get_rethrow_strat<const N: usize>(
@@ -225,7 +301,11 @@ fn get_total_score<const N: usize>(points: &[Option<usize>]) -> usize {
     total
 }
 
-pub fn start<const N: usize>() {
+pub fn start<const N: usize>()
+where
+    [(); cell_from_dice::<N>()]:,
+    [(); cell_from_dice::<N>() - 6]:,
+{
     println!(
         "Welcome to the interactive guide of a free game with {} dice",
         N
@@ -287,15 +367,15 @@ pub fn start<const N: usize>() {
                 last_dice = throw;
             }
             ["auto"] => {
-                let free_cells: Vec<_> =
-                    points.iter().map(|x| x.is_none()).collect();
+                let filled_cells: Vec<_> =
+                    points.iter().map(|x| x.is_some()).collect();
 
                 let points_above =
                     points.iter().take(6).filter_map(|x| x.as_ref()).sum();
 
                 if throws_left == 0 {
                     let ind = get_cell_strat::<N>(
-                        &free_cells,
+                        &filled_cells,
                         &last_dice,
                         points_above,
                     );
@@ -317,7 +397,7 @@ pub fn start<const N: usize>() {
                     println!("New throw:\n{}", last_dice);
                 } else {
                     let reroll = get_rethrow_strat::<N>(
-                        &free_cells,
+                        &filled_cells,
                         &last_dice,
                         throws_left,
                         points_above,
@@ -337,9 +417,9 @@ pub fn start<const N: usize>() {
             ["advise", dice_left, dice] => {
                 let throws_left: usize = dice_left.parse().unwrap();
                 if dice.len() != N {
-                    continue;
+                    continue 'outer;
                 }
-                let mut throw = DiceThrow::from([0u8; 6]);
+                let mut throw = DiceThrow::from([0usize; 6]);
                 for c in dice.chars() {
                     let i = (c as u8 - b'0') as usize;
                     throw[i] += 1;
@@ -347,8 +427,8 @@ pub fn start<const N: usize>() {
 
                 println!("You entered:\n{}\n", throw);
 
-                let free_cells: Vec<_> =
-                    points.iter().map(|x| x.is_none()).collect();
+                let filled_cells: Vec<_> =
+                    points.iter().map(|x| x.is_some()).collect();
 
                 let points_above =
                     points.iter().take(6).filter_map(|x| x.as_ref()).sum();
@@ -356,7 +436,7 @@ pub fn start<const N: usize>() {
                 match throws_left {
                     0 => {
                         let ind = get_cell_strat::<N>(
-                            &free_cells,
+                            &filled_cells,
                             &throw,
                             points_above,
                         );
@@ -371,7 +451,7 @@ pub fn start<const N: usize>() {
                     }
                     1 | 2 => {
                         let rethrow = get_rethrow_strat::<N>(
-                            &free_cells,
+                            &filled_cells,
                             &throw,
                             throws_left,
                             points_above,

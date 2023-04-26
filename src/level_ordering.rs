@@ -6,7 +6,7 @@ use std::{
 use itertools::iproduct;
 use once_cell::sync::Lazy;
 
-pub const fn points_above<const N: i32>() -> i32 {
+pub const fn points_above<const N: usize>() -> usize {
     match N {
         5 => 63,
         6 => 84,
@@ -14,11 +14,13 @@ pub const fn points_above<const N: i32>() -> i32 {
     }
 }
 
-fn a_levels<const N: i32>() -> AboveLevelsType {
+fn a_levels<const N: usize>() -> AboveLevelsType {
+    let ni = N as i32;
+
     let mut levels = [(); 7].map(|_| HashSet::new());
 
     for (i1, i2, i3, i4, i5, i6) in
-        iproduct!(-1..=N, -1..=N, -1..=N, -1..=N, -1..=N, -1..=N)
+        iproduct!(-1..=ni, -1..=ni, -1..=ni, -1..=ni, -1..=ni, -1..=ni)
     {
         let x = [i1, i2, i3, i4, i5, i6];
         let xb = x.map(|x| x >= 0);
@@ -26,7 +28,7 @@ fn a_levels<const N: i32>() -> AboveLevelsType {
         let xs = xv.zip([1, 2, 3, 4, 5, 6]).map(|(x, n)| x * n);
 
         let n = xb.into_iter().filter(|&x| x).count();
-        let s = points_above::<N>().min(xs.iter().sum()) as usize;
+        let s = points_above::<N>().min(xs.iter().sum::<i32>() as usize);
 
         levels[n].insert((s, xb));
     }

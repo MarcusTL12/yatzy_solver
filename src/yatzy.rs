@@ -34,7 +34,36 @@ impl<const CELLS: usize> From<([bool; 6], [bool; CELLS - 6], usize)>
     }
 }
 
+pub const fn cell_from_dice<const N: usize>() -> usize {
+    match N {
+        5 => 15,
+        6 => 20,
+        _ => panic!(),
+    }
+}
+
+pub const fn dice_from_cells<const CELLS: usize>() -> usize {
+    match CELLS {
+        15 => 5,
+        20 => 6,
+        _ => panic!(),
+    }
+}
+
+impl<const N: usize> Default for State<N> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<const CELLS: usize> State<CELLS> {
+    pub fn new() -> Self {
+        Self {
+            cells: [false; CELLS],
+            points_above: 0,
+        }
+    }
+
     pub fn get_above_cells(&self) -> [bool; 6] {
         *self.cells.split_array_ref().0
     }
@@ -64,9 +93,9 @@ impl<const CELLS: usize> State<CELLS> {
 
     pub fn modify_cell(&mut self, i: usize, throw: DiceThrow) -> usize
     where
-        [(); CELLS / 5 + 2]:,
+        [(); dice_from_cells::<CELLS>()]:,
     {
-        let points = throw.cell_score::<{ CELLS / 5 + 2 }>(i);
+        let points = throw.cell_score::<{ dice_from_cells::<CELLS>() }>(i);
 
         if i < 6 {
             self.points_above += points;
@@ -79,7 +108,7 @@ impl<const CELLS: usize> State<CELLS> {
 
     pub fn set_cell(&self, i: usize, throw: DiceThrow) -> (Self, usize)
     where
-        [(); CELLS / 5 + 2]:,
+        [(); dice_from_cells::<CELLS>()]:,
     {
         let mut state = self.clone();
 
@@ -87,24 +116,26 @@ impl<const CELLS: usize> State<CELLS> {
 
         (state, score)
     }
-}
 
-impl Default for YatzyState5 {
-    fn default() -> Self {
-        Self::new()
+    pub fn from_dyn(dyn_cells: &[bool], points_above: usize) -> Self
+    where
+        [(); CELLS - 6]:,
+    {
+        assert!(dyn_cells.len() == CELLS);
+        let mut cells = [false; CELLS];
+        *cells.split_array_mut().0 = *dyn_cells.split_array_ref::<6>().0;
+        *cells.rsplit_array_mut().1 =
+            *dyn_cells.rsplit_array_ref::<{ CELLS - 6 }>().1;
+        Self {
+            cells,
+            points_above,
+        }
     }
 }
 
 impl YatzyState5 {
-    pub fn new() -> Self {
-        Self {
-            cells: [false; 15],
-            points_above: 0,
-        }
-    }
-
     pub fn get_above_index(&self) -> usize {
-        let pts = points_above::<5>().min(self.points_above as i32) as usize;
+        let pts = points_above::<5>().min(self.points_above);
 
         ABOVE_LEVELS_5_MAP[&(pts, self.get_above_cells())]
     }
@@ -114,22 +145,9 @@ impl YatzyState5 {
     }
 }
 
-impl Default for YatzyState6 {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl YatzyState6 {
-    pub fn new() -> Self {
-        Self {
-            cells: [false; 20],
-            points_above: 0,
-        }
-    }
-
     pub fn get_above_index(&self) -> usize {
-        let pts = points_above::<6>().min(self.points_above as i32) as usize;
+        let pts = points_above::<6>().min(self.points_above);
 
         ABOVE_LEVELS_6_MAP[&(pts, self.get_above_cells())]
     }

@@ -983,3 +983,16 @@ pub static DICE_ORDER_MAP: Lazy<DiceOrderMapType> = Lazy::new(|| {
 
     map
 });
+
+pub const fn amt_dice_combinations<const N: usize>() -> usize {
+    match N {
+        0 => 1,
+        1 => 6,
+        2 => 21,
+        3 => 56,
+        4 => 126,
+        5 => 252,
+        6 => 462,
+        _ => panic!("Unsupported amount of dice!"),
+    }
+}
