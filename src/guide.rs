@@ -260,7 +260,26 @@ fn get_rethrow_strat<const N: usize>(
     throws_left: usize,
     points_above: usize,
 ) -> u8 {
-    todo!()
+    let [na, nb, _, lb, ai, bi] = match N {
+        5 => get_state_indices5(cells, points_above),
+        6 => get_state_indices6(cells, points_above),
+        _ => panic!(),
+    };
+
+    let lt = amt_dice_combinations::<N>();
+    let ti = dice.get_index();
+
+    let total_index = (ai * lb + bi) * lt + ti;
+
+    let layer = Layer::<N> {
+        na,
+        nb,
+        nt: throws_left,
+        scores: None,
+        strats: None,
+    };
+
+    get_byte_from_file(&layer.strats_path(), total_index)
 }
 
 fn new_throw(throw: &DiceThrow, mask: u8, rethrow: DiceThrow) -> DiceThrow {
@@ -457,7 +476,10 @@ where
                             points_above,
                         );
 
-                        println!("Rethrow:\n{}", rethrow);
+                        println!(
+                            "Rethrow:\n{}",
+                            last_dice.get_subthrow(rethrow)
+                        );
                     }
                     _ => unreachable!(),
                 }

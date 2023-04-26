@@ -356,6 +356,20 @@ impl DiceThrow {
     pub fn into_mask_iter(self) -> impl Iterator<Item = u8> {
         self.into_sub_throw_iter().map(move |st| self.get_mask(st))
     }
+
+    pub fn get_subthrow(&self, mut mask: u8) -> Self {
+        let mut dice = DiceThrow::new();
+
+        for d in self.into_ordered_dice() {
+            if mask & 1 != 0 {
+                dice[d as usize] += 1;
+            }
+
+            mask >>= 1;
+        }
+
+        dice
+    }
 }
 
 fn factorial(n: usize) -> usize {
