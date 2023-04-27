@@ -57,17 +57,19 @@ pub fn solve_layer_type1_5dice(
 
                 // Expected score will be the extra score (guaranteed)
                 // plus the expected score based on what you might roll next
-                let mut expected_score = extra_score as f32;
+                let mut expected_score = extra_score as f64;
 
                 // For a given choice of cell, looping over possible
                 // throws to find it's expected score.
                 for (new_ti, &(_, prob)) in DICE_DISTR.5.iter().enumerate() {
-                    let prob = prob as f32 / DICE_DIVISOR[5] as f32;
+                    let prob = prob as f64 / DICE_DIVISOR[5] as f64;
 
-                    expected_score += prob
-                        * prev_layer
+                    expected_score = prob.mul_add(
+                        *prev_layer
                             .get([new_ai, new_bi, new_ti])
-                            .unwrap_or(&0.0);
+                            .unwrap_or(&0.0) as f64,
+                        expected_score,
+                    );
                 }
 
                 if expected_score >= best_score {
@@ -76,7 +78,7 @@ pub fn solve_layer_type1_5dice(
                 }
             }
 
-            *cur_score = best_score;
+            *cur_score = best_score as f32;
             *cur_strat = best_cell_i as u8;
         },
     );
@@ -98,16 +100,19 @@ pub fn solve_layer_type2_5dice(
         prev_layer_scores: &Array3<f32>,
         ai: usize,
         bi: usize,
-    ) -> f32 {
+    ) -> f64 {
         let mut expected_score = 0.0;
         for &(rethrow, prob) in dice_distr {
             let new_throw = throw.overwrite_reroll::<5, N>(reroll, rethrow);
 
             let new_ti = DICE_ORDER_MAP.5[&new_throw.collect_dice()];
 
-            let prob = prob as f32 / DICE_DIVISOR[N] as f32;
+            let prob = prob as f64 / DICE_DIVISOR[N] as f64;
 
-            expected_score += prob * prev_layer_scores[[ai, bi, new_ti]];
+            expected_score = prob.mul_add(
+                prev_layer_scores[[ai, bi, new_ti]] as f64,
+                expected_score,
+            );
         }
         expected_score
     }
@@ -130,7 +135,7 @@ pub fn solve_layer_type2_5dice(
             // be "solved".
 
             // Starting out with no rerolled
-            let mut best_score = prev_layer_scores[[ai, bi, ti]];
+            let mut best_score = prev_layer_scores[[ai, bi, ti]] as f64;
             let mut best_reroll = 0;
 
             // Looping over possible rerolls
@@ -184,7 +189,7 @@ pub fn solve_layer_type2_5dice(
                 }
             }
 
-            *cur_score = best_score;
+            *cur_score = best_score as f32;
             *cur_strat = best_reroll;
         },
     );
