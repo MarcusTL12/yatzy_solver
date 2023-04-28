@@ -217,7 +217,7 @@ pub fn make_thin_layers_5dice() -> Array3<Option<Layer<5>>> {
 }
 
 pub fn make_thin_layers_6dice() -> Array3<Option<Layer<6>>> {
-    Array3::from_shape_fn([7, 16, 3], |(na, nb, nt)| {
+    Array3::from_shape_fn([7, 15, 3], |(na, nb, nt)| {
         Some(Layer {
             na,
             nb,
@@ -382,7 +382,7 @@ pub fn solve_6dice() {
     let mut compute_timer = Duration::ZERO;
 
     for na in (0..7).rev() {
-        for nb in (0..10).rev() {
+        for nb in (0..15).rev() {
             println!("=============================");
             println!("na: {na:2}, nb: {nb:2}, nt: 0");
 
