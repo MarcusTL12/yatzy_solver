@@ -412,7 +412,7 @@ where
                 println!("{}", throw);
                 dice = throw;
             }
-            ["auto"] => {
+            ["auto"] | [] => {
                 let filled_cells: Vec<_> =
                     points.iter().map(|x| x.is_some()).collect();
 
@@ -571,7 +571,7 @@ where
 
                 println!("Starting throw:\n{}", dice);
             }
-            ["rethrow", mask_str] => {
+            ["rethrow" | "rt", mask_str] => {
                 if throws_left == 0 {
                     println!("No throws left!");
                     continue 'outer;
@@ -606,6 +606,19 @@ where
 
                 println!("New throw:\n{}", dice);
                 println!("Throws left: {throws_left}");
+            }
+            ["set", "dice", dice_str] => {
+                if dice_str.len() != N {
+                    continue 'outer;
+                }
+                let mut throw = DiceThrow::from([0usize; 6]);
+                for c in dice_str.chars() {
+                    let i = (c as u8 - b'0') as usize;
+                    throw[i] += 1;
+                }
+
+                dice = throw;
+                println!("Current dice:\n{}", dice);
             }
             _ => println!("Invalid command! {:?}", command),
         }
