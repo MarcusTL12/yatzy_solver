@@ -23,6 +23,7 @@ fn main() {
 
     match args.get(1).unwrap_or(&"".to_owned()).as_str() {
         "guide-5" => start::<5>(),
+        "guide-6" => start::<6>(),
         "compute-strats-5" => solve_5dice(),
         "compute-strats-6" => solve_6dice(),
         "expected-score-5" => {

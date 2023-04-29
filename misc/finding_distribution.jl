@@ -1,4 +1,5 @@
 using StatsPlots
+using Statistics
 
 yz = "target/release/libyatzy_solver.so"
 

@@ -444,7 +444,7 @@ pub fn solve_6dice() {
                 layer.save_strats();
 
                 let t = timer.elapsed();
-                println!("Saving took  {t:.2?}");
+                println!("Saving  took {t:.2?}");
                 save_timer += t;
             }
 
@@ -496,7 +496,7 @@ pub fn solve_6dice() {
                     layer.save_strats();
 
                     let t = timer.elapsed();
-                    println!("Saving took  {t:.2?}");
+                    println!("Saving  took {t:.2?}");
                     save_timer += t;
                 }
 

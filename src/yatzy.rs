@@ -91,19 +91,43 @@ impl<const CELLS: usize> State<CELLS> {
         count_true(self.get_below_cells())
     }
 
+    fn get_bonus(&self) -> usize {
+        match CELLS {
+            15 => {
+                if self.points_above >= 63 {
+                    50
+                } else {
+                    0
+                }
+            }
+            20 => {
+                if self.points_above >= 84 {
+                    100
+                } else {
+                    0
+                }
+            }
+            _ => unreachable!(),
+        }
+    }
+
     pub fn modify_cell(&mut self, i: usize, throw: DiceThrow) -> usize
     where
         [(); dice_from_cells::<CELLS>()]:,
     {
         let points = throw.cell_score::<{ dice_from_cells::<CELLS>() }>(i);
 
+        let old_bonus = self.get_bonus();
+
         if i < 6 {
             self.points_above += points;
         }
 
+        let new_bonus = self.get_bonus();
+
         self.cells[i] = true;
 
-        points
+        points + new_bonus - old_bonus
     }
 
     pub fn set_cell(&self, i: usize, throw: DiceThrow) -> (Self, usize)
