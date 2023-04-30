@@ -306,7 +306,7 @@ pub fn solve_layer_type2_6dice(
         for &(rethrow, prob) in dice_distr {
             let new_throw = throw.overwrite_reroll::<6, N>(reroll, rethrow);
 
-            let new_ti = DICE_ORDER_MAP.5[&new_throw.collect_dice()];
+            let new_ti = DICE_ORDER_MAP.6[&new_throw.collect_dice()];
 
             let prob = prob as f64 / DICE_DIVISOR[N] as f64;
 
