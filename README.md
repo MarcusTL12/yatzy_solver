@@ -284,4 +284,11 @@ offloading layer (na, nb, nt - 1) onto disk and loading layers
 This ammounts to keeping 6 layers in memory at a time (current, 3 using,
 2 loading) where two are of size (na, nb), two of size (na - 1, nb) and two of
 size (na, nb - 1). The maximum memory requirement should therefore be roughly
-8.2 GiB * 6 = 49.2 GiB, which is still quite manageble.
+150 MiB * 6 = 900 MiB for 5 dice and
+8.2 GiB * 6 = 49.2 GiB for 6 dice which is still quite manageble.
+If we choose to stream the next required layers between calculations to save
+memory requirements, this is reduced by a factor 2/3, giving 600 MiB and
+32.8 GiB respectively, but wasting some computation time.
+There is also the question of the IO scheduling, which is presumably highly
+storage architecture dependant. The safest is to do all disk IO serially, but
+some speedup can probably be gained by reading simultaneously.
