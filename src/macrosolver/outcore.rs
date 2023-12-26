@@ -16,7 +16,10 @@ use crate::{
     level_ordering::{
         ABOVE_LEVELS_5, ABOVE_LEVELS_6, BELOW_LEVELS_5, BELOW_LEVELS_6,
     },
-    solver::{solve_layer_type1_5dice, solve_layer_type2_5dice, solve_layer_type1_6dice, solve_layer_type2_6dice},
+    solver::{
+        solve_layer_type1_5dice, solve_layer_type1_6dice,
+        solve_layer_type2_5dice, solve_layer_type2_6dice,
+    },
 };
 
 pub static PREFIX: Lazy<String> =

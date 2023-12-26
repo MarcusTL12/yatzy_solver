@@ -247,3 +247,41 @@ to not have to read from disk is to solve the layers "row by row" or
 "column by column" whichever requires least max RAM. This turns out to be to
 keep a "column" in memory at a time which would require 573 MiB (5 dice) or
 33.2 GiB (6 dice).
+
+## What about saving throws?
+
+So what if we do want to save throws? Well, now we have to store more layers
+corresponding to more throws left (nt). For the first layer this is not a
+problem, as you only ever start with 2 throws left. The layers now has a more
+convoluted dependency graph as in addition to rethrowing dice you can choose
+to keep your remaining throws for later and put the current dice into an open
+cell. That means that to solve layer (na, nb, nt) with nt > 0 needs access to
+layer (na, nb, nt - 1) as before, but also (na - 1, nb, nt + 2) and
+(na, nb - 1, nt + 2). This means that we have a 50% increase in memory
+consumption from needing to keep 3 layers in memory at a time.
+
+### Storage
+
+The number of layers is massively increased. At the last turn of the game
+you need to account for the possibility of having saved all the throws,
+giving nt = 2 * 15 = 30 for 5 dice and nt = 2 * 20 = 40 for 6 dice.
+At the middle of the game this leads to nt = 16 and nt = 20 for the largest
+layers, giving a ~10x storage increase for 6 dice, which should make the
+400 GiB for 6 dice become ~ 4 TiB
+
+### The process 3
+
+Now to systematically go through each of the different layers, the simplest is
+to build up each stack of layers with the same (na, nb) for nt from 0 to the
+desired max nt. Since a layer now requires random access to neighbouring layers
+of nt != 0, we can not keep all neighbouring layers in memory in a simple smart
+way. The simplest streaming way is to stream the next required layers and saving
+the previously computed layer while working on the current layer. This means
+that when computing layer (na, nb, nt) we are keeping layers (na, nb, nt - 1),
+(na - 1, nb, nt + 2), (na, nb - 1, nt + 2) in memory for comptation, while
+offloading layer (na, nb, nt - 1) onto disk and loading layers
+(na - 1, nb, nt + 3) and (na, nb + 1, nt + 3) for the next computation.
+This ammounts to keeping 6 layers in memory at a time (current, 3 using,
+2 loading) where two are of size (na, nb), two of size (na - 1, nb) and two of
+size (na, nb - 1). The maximum memory requirement should therefore be roughly
+8.2 GiB * 6 = 49.2 GiB, which is still quite manageble.
