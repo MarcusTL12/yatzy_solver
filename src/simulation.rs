@@ -6,7 +6,9 @@ use ndarray::{
 use crate::{
     dice_throw::DiceThrow,
     guide::{get_state_indices5, get_state_indices6, get_total_score},
-    macrosolver::outcore::{make_thin_layers_5dice, Layer, make_thin_layers_6dice},
+    macrosolver::outcore::{
+        make_thin_layers_5dice, make_thin_layers_6dice, Layer,
+    },
     yatzy::cell_from_dice,
 };
 
@@ -17,9 +19,23 @@ pub fn simulate_n_5(scores: &mut [u32]) {
         layer.as_mut().unwrap().load_strats();
     }
 
-    scores
-        .par_iter_mut()
-        .for_each(|score| *score = simulate_5(&layers));
+    scores.par_iter_mut().for_each(|score| {
+        *score = get_total_score::<5>(&simulate_5(&layers)) as u32
+    });
+}
+
+pub fn simulate_n_5_full(scores: &mut [[u32; 15]]) {
+    let mut layers = make_thin_layers_5dice();
+
+    for layer in &mut layers {
+        layer.as_mut().unwrap().load_strats();
+    }
+
+    scores.par_iter_mut().for_each(|score| {
+        for (score, somescore) in score.iter_mut().zip(simulate_5(&layers)) {
+            *score = somescore.unwrap() as u32;
+        }
+    });
 }
 
 pub fn simulate_n_6(scores: &mut [u32]) {
@@ -29,9 +45,23 @@ pub fn simulate_n_6(scores: &mut [u32]) {
         layer.as_mut().unwrap().load_strats();
     }
 
-    scores
-        .par_iter_mut()
-        .for_each(|score| *score = simulate_6(&layers));
+    scores.par_iter_mut().for_each(|score| {
+        *score = get_total_score::<6>(&simulate_6(&layers)) as u32
+    });
+}
+
+pub fn simulate_n_6_full(scores: &mut [[u32; 20]]) {
+    let mut layers = make_thin_layers_6dice();
+
+    for layer in &mut layers {
+        layer.as_mut().unwrap().load_strats();
+    }
+
+    scores.par_iter_mut().for_each(|score| {
+        for (score, somescore) in score.iter_mut().zip(simulate_6(&layers)) {
+            *score = somescore.unwrap() as u32;
+        }
+    });
 }
 
 fn get_rethrow_strat<const N: usize>(
@@ -77,8 +107,8 @@ where
     layer.strats.as_ref().unwrap()[[ai, bi, ti]] as usize
 }
 
-fn simulate_5(layers: &Array3<Option<Layer<5>>>) -> u32 {
-    let mut points: [Option<usize>; 15] = [None; 15];
+fn simulate_5(layers: &Array3<Option<Layer<5>>>) -> [Option<usize>; 15] {
+    let mut points = [None; 15];
 
     let mut dice = DiceThrow::throw(5);
 
@@ -118,11 +148,11 @@ fn simulate_5(layers: &Array3<Option<Layer<5>>>) -> u32 {
         dice = DiceThrow::throw(5);
     }
 
-    get_total_score::<5>(&points) as u32
+    points
 }
 
-fn simulate_6(layers: &Array3<Option<Layer<6>>>) -> u32 {
-    let mut points: [Option<usize>; 20] = [None; 20];
+fn simulate_6(layers: &Array3<Option<Layer<6>>>) -> [Option<usize>; 20] {
+    let mut points = [None; 20];
 
     let mut dice = DiceThrow::throw(6);
 
@@ -162,5 +192,5 @@ fn simulate_6(layers: &Array3<Option<Layer<6>>>) -> u32 {
         dice = DiceThrow::throw(6);
     }
 
-    get_total_score::<6>(&points) as u32
+    points
 }

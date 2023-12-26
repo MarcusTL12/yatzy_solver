@@ -18,3 +18,19 @@ function find_dist_6(n)
 
     data
 end
+
+function find_dist_5_full(n)
+    data = zeros(Int32, 15, n)
+
+    ccall((:extern_simulate_n_5_full, yz), Cvoid, (Ptr{Int32}, Int), data, n)
+
+    data
+end
+
+function find_dist_6_full(n)
+    data = zeros(Int32, 20, n)
+
+    ccall((:extern_simulate_n_6_full, yz), Cvoid, (Ptr{Int32}, Int), data, n)
+
+    data
+end

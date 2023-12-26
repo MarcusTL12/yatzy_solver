@@ -3,7 +3,7 @@
 
 use std::slice::from_raw_parts_mut;
 
-use simulation::{simulate_n_5, simulate_n_6};
+use simulation::{simulate_n_5, simulate_n_6, simulate_n_5_full, simulate_n_6_full};
 
 pub mod dice_distributions;
 pub mod dice_throw;
@@ -29,8 +29,28 @@ pub unsafe extern "C" fn extern_simulate_n_5(x: *mut u32, n: usize) {
 ///
 /// n needs to not be larger than the writable memory
 #[no_mangle]
+pub unsafe extern "C" fn extern_simulate_n_5_full(x: *mut [u32; 15], n: usize) {
+    let x = from_raw_parts_mut(x, n);
+
+    simulate_n_5_full(x);
+}
+
+/// # Safety
+///
+/// n needs to not be larger than the writable memory
+#[no_mangle]
 pub unsafe extern "C" fn extern_simulate_n_6(x: *mut u32, n: usize) {
     let x = from_raw_parts_mut(x, n);
 
     simulate_n_6(x);
+}
+
+/// # Safety
+///
+/// n needs to not be larger than the writable memory
+#[no_mangle]
+pub unsafe extern "C" fn extern_simulate_n_6_full(x: *mut [u32; 20], n: usize) {
+    let x = from_raw_parts_mut(x, n);
+
+    simulate_n_6_full(x);
 }
