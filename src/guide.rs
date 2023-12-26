@@ -223,16 +223,16 @@ fn get_byte_from_file(filename: &str, index: usize) -> u8 {
     buf[0]
 }
 
-fn get_float_from_file(filename: &str, index: usize) -> f32 {
-    let mut file = OpenOptions::new().read(true).open(filename).unwrap();
+fn get_float_from_file(filename: &str, index: usize) -> Option<f32> {
+    let mut file = OpenOptions::new().read(true).open(filename).ok()?;
 
-    file.seek(SeekFrom::Start((index * 4) as u64)).unwrap();
+    file.seek(SeekFrom::Start((index * 4) as u64)).ok()?;
 
     let mut buf = [0; 4];
 
-    file.read_exact(&mut buf).unwrap();
+    file.read_exact(&mut buf).ok()?;
 
-    f32::from_le_bytes(buf)
+    Some(f32::from_le_bytes(buf))
 }
 
 fn get_cell_strat<const N: usize>(
@@ -299,7 +299,7 @@ fn get_score<const N: usize>(
     dice: &DiceThrow,
     points_above: usize,
     throws_left: usize,
-) -> f32 {
+) -> Option<f32> {
     let [na, nb, _, lb, ai, bi] = match N {
         5 => get_state_indices5(cells, points_above),
         6 => get_state_indices6(cells, points_above),
@@ -466,17 +466,17 @@ where
                 let points_above =
                     points.iter().take(6).filter_map(|x| x.as_ref()).sum();
 
-                let rem_score = get_score::<N>(
+                if let Some(rem_score) = get_score::<N>(
                     &filled_cells,
                     &dice,
                     points_above,
                     throws_left,
-                );
+                ) {
+                    let tot_score =
+                        get_total_score::<N>(&points) as f32 + rem_score;
 
-                let tot_score =
-                    get_total_score::<N>(&points) as f32 + rem_score;
-
-                println!("expected total score is now {:.2}", tot_score);
+                    println!("expected total score is now {:.2}", tot_score);
+                }
             }
             ["advise" | "a", dice_left, dice_str] => {
                 let throws_left: usize = dice_left.parse().unwrap();
@@ -525,37 +525,53 @@ where
                     }
                     _ => unreachable!(),
                 }
+
+                if let Some(rem_score) = get_score::<N>(
+                    &filled_cells,
+                    &throw,
+                    points_above,
+                    throws_left,
+                ) {
+                    let tot_score =
+                        get_total_score::<N>(&points) as f32 + rem_score;
+
+                    println!("expected total score is now {:.2}", tot_score);
+                }
             }
             ["expected-remaining" | "ex-r"] => {
                 let filled_cells: Vec<_> =
                     points.iter().map(|x| x.is_some()).collect();
                 let points_above =
                     points.iter().take(6).filter_map(|x| x.as_ref()).sum();
-                let rem_score = get_score::<N>(
+                if let Some(rem_score) = get_score::<N>(
                     &filled_cells,
                     &dice,
                     points_above,
                     throws_left,
-                );
-
-                println!("expected remaining score is {}", rem_score);
+                ) {
+                    println!("expected remaining score is {}", rem_score);
+                } else {
+                    println!("Failed to read scores file");
+                }
             }
             ["expected-total" | "ex-t"] => {
                 let filled_cells: Vec<_> =
                     points.iter().map(|x| x.is_some()).collect();
                 let points_above =
                     points.iter().take(6).filter_map(|x| x.as_ref()).sum();
-                let rem_score = get_score::<N>(
+                if let Some(rem_score) = get_score::<N>(
                     &filled_cells,
                     &dice,
                     points_above,
                     throws_left,
-                );
+                ) {
+                    let tot_score =
+                        get_total_score::<N>(&points) as f32 + rem_score;
 
-                let tot_score =
-                    get_total_score::<N>(&points) as f32 + rem_score;
-
-                println!("expected total score is {}", tot_score);
+                    println!("expected total score is {}", tot_score);
+                } else {
+                    println!("Failed to read scores file");
+                }
             }
             ["reset"] => {
                 points = vec![
