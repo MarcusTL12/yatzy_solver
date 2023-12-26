@@ -385,7 +385,7 @@ where
             ["help", "cell", "names"] => println!("{}", HELP_CELL_NAMES),
             ["exit" | "q"] => break,
             ["display", "points"] => display_points::<N>(&points, None, None),
-            ["set", "points", cell, pts] => {
+            ["set", "points", cell, pts] | ["sp", cell, pts] => {
                 let index = get_yatzy_index::<N>(cell);
                 let pts = pts.parse().unwrap();
                 points[index] = Some(pts);
@@ -478,7 +478,7 @@ where
 
                 println!("expected total score is now {:.2}", tot_score);
             }
-            ["advise", dice_left, dice_str] => {
+            ["advise" | "a", dice_left, dice_str] => {
                 let throws_left: usize = dice_left.parse().unwrap();
                 if dice_str.len() != N {
                     continue 'outer;
@@ -521,7 +521,7 @@ where
                             points_above,
                         );
 
-                        println!("Rethrow:\n{}", dice.get_subthrow(reroll));
+                        println!("Rethrow:\n{}", throw.get_subthrow(reroll));
                     }
                     _ => unreachable!(),
                 }
