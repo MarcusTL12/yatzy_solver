@@ -316,7 +316,7 @@ pub fn solve_5dice() {
                 println!("--------------------------------");
                 println!("na: {na:2}, nb: {nb:2}, nt: {nt}");
 
-                let mut layer: Layer<5> = layers[[na, nb, nt]].take().unwrap();
+                let mut layer = layers[[na, nb, nt]].take().unwrap();
 
                 if layer.is_done() {
                     println!("Already done!");
@@ -389,7 +389,7 @@ pub fn solve_6dice() {
             println!("=============================");
             println!("na: {na:2}, nb: {nb:2}, nt: 0");
 
-            let mut layer: Layer<6> = layers[[na, nb, 0]].take().unwrap();
+            let mut layer = layers[[na, nb, 0]].take().unwrap();
 
             if layer.is_done() {
                 println!("Already done!");
