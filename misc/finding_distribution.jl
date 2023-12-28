@@ -11,6 +11,14 @@ function find_dist_5(n)
     data
 end
 
+function find_dist_5x(n)
+    data = zeros(Int32, n)
+
+    ccall((:extern_simulate_n_5x, yz), Cvoid, (Ptr{Int32}, Int), data, n)
+
+    data
+end
+
 function find_dist_6(n)
     data = zeros(Int32, n)
 

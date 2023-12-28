@@ -294,7 +294,7 @@ fn get_rethrow_strat<const N: usize>(
     get_byte_from_file(&layer.strats_path(), total_index)
 }
 
-enum Strategy {
+pub enum Strategy {
     Rethrow(u8),
     Cell(usize),
 }

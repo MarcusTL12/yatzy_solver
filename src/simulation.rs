@@ -1,3 +1,4 @@
+use arrayvec::ArrayVec;
 use ndarray::{
     parallel::prelude::{IntoParallelRefMutIterator, ParallelIterator},
     Array3,
@@ -5,9 +6,12 @@ use ndarray::{
 
 use crate::{
     dice_throw::DiceThrow,
-    guide::{get_state_indices5, get_state_indices6, get_total_score},
-    macrosolver::outcore::{
-        make_thin_layers_5dice, make_thin_layers_6dice, Layer,
+    guide::{
+        get_state_indices5, get_state_indices6, get_total_score, Strategy,
+    },
+    macrosolver::{
+        outcore::{make_thin_layers_5dice, make_thin_layers_6dice, Layer},
+        outcorex::make_thin_layers_5dicex,
     },
     yatzy::cell_from_dice,
 };
@@ -24,6 +28,18 @@ pub fn simulate_n_5(scores: &mut [u32]) {
     });
 }
 
+pub fn simulate_n_5x(scores: &mut [u32]) {
+    let mut layers = make_thin_layers_5dicex();
+
+    for layer in &mut layers {
+        layer.as_mut().unwrap().load_strats();
+    }
+
+    scores.par_iter_mut().for_each(|score| {
+        *score = get_total_score::<5>(&simulate_5x(&layers)) as u32
+    });
+}
+
 pub fn simulate_n_5_full(scores: &mut [[u32; 15]]) {
     let mut layers = make_thin_layers_5dice();
 
@@ -33,6 +49,20 @@ pub fn simulate_n_5_full(scores: &mut [[u32; 15]]) {
 
     scores.par_iter_mut().for_each(|score| {
         for (score, somescore) in score.iter_mut().zip(simulate_5(&layers)) {
+            *score = somescore.unwrap() as u32;
+        }
+    });
+}
+
+pub fn simulate_n_5x_full(scores: &mut [[u32; 15]]) {
+    let mut layers = make_thin_layers_5dicex();
+
+    for layer in &mut layers {
+        layer.as_mut().unwrap().load_strats();
+    }
+
+    scores.par_iter_mut().for_each(|score| {
+        for (score, somescore) in score.iter_mut().zip(simulate_5x(&layers)) {
             *score = somescore.unwrap() as u32;
         }
     });
@@ -107,6 +137,32 @@ where
     layer.strats.as_ref().unwrap()[[ai, bi, ti]] as usize
 }
 
+fn get_combined_strat<const N: usize>(
+    cells: &[bool],
+    dice: &DiceThrow,
+    throws_left: usize,
+    points_above: usize,
+    layers: &Array3<Option<Layer<N, true>>>,
+) -> Strategy {
+    let [na, nb, _, _, ai, bi] = match N {
+        5 => get_state_indices5(cells, points_above),
+        6 => get_state_indices6(cells, points_above),
+        _ => panic!(),
+    };
+
+    let ti = dice.get_index();
+
+    let layer = layers[[na, nb, throws_left]].as_ref().unwrap();
+
+    let byte = layer.strats.as_ref().unwrap()[[ai, bi, ti]];
+
+    if (byte & 128) != 0 {
+        Strategy::Rethrow(byte & !128)
+    } else {
+        Strategy::Cell(byte as usize)
+    }
+}
+
 fn simulate_5(layers: &Array3<Option<Layer<5, false>>>) -> [Option<usize>; 15] {
     let mut points = [None; 15];
 
@@ -130,7 +186,7 @@ fn simulate_5(layers: &Array3<Option<Layer<5, false>>>) -> [Option<usize>; 15] {
 
             dice = dice.overwrite_reroll_dyn::<5>(
                 reroll,
-                &rethrow.into_ordered_dice().collect::<Vec<_>>(),
+                &rethrow.into_ordered_dice().collect::<ArrayVec<_, 5>>(),
             );
         }
 
@@ -174,7 +230,7 @@ fn simulate_6(layers: &Array3<Option<Layer<6, false>>>) -> [Option<usize>; 20] {
 
             dice = dice.overwrite_reroll_dyn::<6>(
                 reroll,
-                &rethrow.into_ordered_dice().collect::<Vec<_>>(),
+                &rethrow.into_ordered_dice().collect::<ArrayVec<_, 6>>(),
             );
         }
 
@@ -193,4 +249,47 @@ fn simulate_6(layers: &Array3<Option<Layer<6, false>>>) -> [Option<usize>; 20] {
     }
 
     points
+}
+
+fn simulate_5x(layers: &Array3<Option<Layer<5, true>>>) -> [Option<usize>; 15] {
+    let mut points = [None; 15];
+
+    let mut dice = DiceThrow::throw(5);
+
+    let mut throws_left = 2;
+
+    loop {
+        if points.iter().all(|x| x.is_some()) {
+            break points;
+        }
+
+        let filled_cells = points.map(|x| x.is_some());
+        let points_above =
+            points.iter().take(6).filter_map(|x| x.as_ref()).sum();
+
+        match get_combined_strat::<5>(
+            &filled_cells,
+            &dice,
+            throws_left,
+            points_above,
+            layers,
+        ) {
+            Strategy::Cell(ind) => {
+                let score = dice.cell_score::<5>(ind);
+                points[ind] = Some(score);
+                dice = DiceThrow::throw(5);
+                throws_left += 2;
+            }
+            Strategy::Rethrow(reroll) => {
+                let rethrow = DiceThrow::throw(reroll.count_ones() as usize);
+
+                dice = dice.overwrite_reroll_dyn::<5>(
+                    reroll,
+                    &rethrow.into_ordered_dice().collect::<ArrayVec<_, 5>>(),
+                );
+
+                throws_left -= 1;
+            }
+        }
+    }
 }
