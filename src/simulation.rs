@@ -69,7 +69,7 @@ fn get_rethrow_strat<const N: usize>(
     dice: &DiceThrow,
     throws_left: usize,
     points_above: usize,
-    layers: &Array3<Option<Layer<N>>>,
+    layers: &Array3<Option<Layer<N, false>>>,
 ) -> u8 {
     let [na, nb, _, _, ai, bi] = match N {
         5 => get_state_indices5(cells, points_above),
@@ -88,7 +88,7 @@ fn get_cell_strat<const N: usize>(
     cells: &[bool],
     dice: &DiceThrow,
     points_above: usize,
-    layers: &Array3<Option<Layer<N>>>,
+    layers: &Array3<Option<Layer<N, false>>>,
 ) -> usize
 where
     [(); cell_from_dice::<N>()]:,
@@ -107,7 +107,7 @@ where
     layer.strats.as_ref().unwrap()[[ai, bi, ti]] as usize
 }
 
-fn simulate_5(layers: &Array3<Option<Layer<5>>>) -> [Option<usize>; 15] {
+fn simulate_5(layers: &Array3<Option<Layer<5, false>>>) -> [Option<usize>; 15] {
     let mut points = [None; 15];
 
     let mut dice = DiceThrow::throw(5);
@@ -151,7 +151,7 @@ fn simulate_5(layers: &Array3<Option<Layer<5>>>) -> [Option<usize>; 15] {
     points
 }
 
-fn simulate_6(layers: &Array3<Option<Layer<6>>>) -> [Option<usize>; 20] {
+fn simulate_6(layers: &Array3<Option<Layer<6, false>>>) -> [Option<usize>; 20] {
     let mut points = [None; 20];
 
     let mut dice = DiceThrow::throw(6);

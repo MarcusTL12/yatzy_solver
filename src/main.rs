@@ -5,7 +5,10 @@ use std::{env, time::Instant};
 
 use dice_distributions::{DICE_DISTR, DICE_DIVISOR};
 use guide::start;
-use macrosolver::outcore::{solve_5dice, solve_6dice, Layer};
+use macrosolver::{
+    outcore::{solve_5dice, solve_6dice, Layer},
+    outcorex::solve_5dicex,
+};
 use simulation::{simulate_n_5, simulate_n_6};
 
 pub mod dice_distributions;
@@ -25,9 +28,10 @@ fn main() {
         "guide-5" => start::<5>(),
         "guide-6" => start::<6>(),
         "compute-strats-5" => solve_5dice(),
+        "compute-strats-5x" => solve_5dicex(),
         "compute-strats-6" => solve_6dice(),
         "expected-score-5" => {
-            let mut layer = Layer::<5> {
+            let mut layer = Layer::<5, false> {
                 na: 0,
                 nb: 0,
                 nt: 2,
@@ -59,7 +63,7 @@ fn main() {
             println!("{scores:?}");
         }
         "expected-score-6" => {
-            let mut layer = Layer::<6> {
+            let mut layer = Layer::<6, false> {
                 na: 0,
                 nb: 0,
                 nt: 2,

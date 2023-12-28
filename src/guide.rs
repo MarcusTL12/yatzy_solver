@@ -255,7 +255,7 @@ where
 
     let total_index = (ai * lb + bi) * lt + ti;
 
-    let layer = Layer::<N> {
+    let layer = Layer::<N, false> {
         na,
         nb,
         nt: 0,
@@ -283,7 +283,7 @@ fn get_rethrow_strat<const N: usize>(
 
     let total_index = (ai * lb + bi) * lt + ti;
 
-    let layer = Layer::<N> {
+    let layer = Layer::<N, false> {
         na,
         nb,
         nt: throws_left,
@@ -311,7 +311,7 @@ fn get_score<const N: usize>(
 
     let total_index = (ai * lb + bi) * lt + ti;
 
-    let layer = Layer::<N> {
+    let layer = Layer::<N, false> {
         na,
         nb,
         nt: throws_left,

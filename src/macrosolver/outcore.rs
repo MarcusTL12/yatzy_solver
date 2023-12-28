@@ -25,7 +25,7 @@ use crate::{
 pub static PREFIX: Lazy<String> =
     Lazy::new(|| std::env::var("YATZY_CACHE").unwrap_or("cache".to_owned()));
 
-pub struct Layer<const N: usize> {
+pub struct Layer<const N: usize, const X: bool> {
     pub na: usize,
     pub nb: usize,
     pub nt: usize,
@@ -51,7 +51,7 @@ fn floats_to_bytes_mut(floats: &mut [f32]) -> &mut [u8] {
     }
 }
 
-impl<const N: usize> Layer<N> {
+impl<const N: usize, const X: bool> Layer<N, X> {
     pub fn empty() -> Self {
         Self {
             na: 0,
@@ -67,11 +67,19 @@ impl<const N: usize> Layer<N> {
     }
 
     pub fn scores_path(&self) -> String {
-        format!("{}/{N}/scores/{}", &*PREFIX, &self.name())
+        if X {
+            format!("{}/{N}x/scores/{}", &*PREFIX, &self.name())
+        } else {
+            format!("{}/{N}/scores/{}", &*PREFIX, &self.name())
+        }
     }
 
     pub fn strats_path(&self) -> String {
-        format!("{}/{N}/strats/{}", &*PREFIX, &self.name())
+        if X {
+            format!("{}/{N}x/strats/{}", &*PREFIX, &self.name())
+        } else {
+            format!("{}/{N}/strats/{}", &*PREFIX, &self.name())
+        }
     }
 
     pub fn save_scores(&self) {
@@ -107,7 +115,7 @@ impl<const N: usize> Layer<N> {
     }
 }
 
-impl Layer<5> {
+impl<const X: bool> Layer<5, X> {
     pub fn load_scores(&mut self) -> Option<()> {
         if self.scores.is_none() {
             let mut file = OpenOptions::new()
@@ -157,7 +165,7 @@ impl Layer<5> {
     }
 }
 
-impl Layer<6> {
+impl<const X: bool> Layer<6, X> {
     pub fn load_scores(&mut self) -> Option<()> {
         if self.scores.is_none() {
             let mut file = OpenOptions::new()
@@ -207,7 +215,7 @@ impl Layer<6> {
     }
 }
 
-pub fn make_thin_layers_5dice() -> Array3<Option<Layer<5>>> {
+pub fn make_thin_layers_5dice() -> Array3<Option<Layer<5, false>>> {
     Array3::from_shape_fn([7, 10, 3], |(na, nb, nt)| {
         Some(Layer {
             na,
@@ -219,7 +227,7 @@ pub fn make_thin_layers_5dice() -> Array3<Option<Layer<5>>> {
     })
 }
 
-pub fn make_thin_layers_6dice() -> Array3<Option<Layer<6>>> {
+pub fn make_thin_layers_6dice() -> Array3<Option<Layer<6, false>>> {
     Array3::from_shape_fn([7, 15, 3], |(na, nb, nt)| {
         Some(Layer {
             na,
@@ -247,7 +255,8 @@ pub fn solve_5dice() {
             println!("=============================");
             println!("na: {na:2}, nb: {nb:2}, nt: 0");
 
-            let mut layer: Layer<5> = layers[[na, nb, 0]].take().unwrap();
+            let mut layer: Layer<5, false> =
+                layers[[na, nb, 0]].take().unwrap();
 
             if layer.is_done() {
                 println!("Already done!");
@@ -458,7 +467,8 @@ pub fn solve_6dice() {
                 println!("--------------------------------");
                 println!("na: {na:2}, nb: {nb:2}, nt: {nt}");
 
-                let mut layer: Layer<6> = layers[[na, nb, nt]].take().unwrap();
+                let mut layer: Layer<6, false> =
+                    layers[[na, nb, nt]].take().unwrap();
 
                 if layer.is_done() {
                     println!("Already done!");
