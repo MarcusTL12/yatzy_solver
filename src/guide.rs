@@ -19,11 +19,11 @@ help: displays this message
 help cell names: display the name legend for cells
 exit/q: exit
 display points: display your points
-set points <cell> <points>: set a cell to a value. Get cell names by
+set points/sp <cell> <points>: set a cell to a value. Get cell names by
     help cell names
 put dice <cell>: put the current dice into the cell.
 clear points <cell>: clears points
-advise <dice-left> <dice>: gives advice on what to do with the dice
+advise/a <dice-left> <dice>: gives advice on what to do with the dice
 throw <N>: prints a dice throw of <N> dice
 auto: automatically perform the next optimal move
 "#;
@@ -294,7 +294,46 @@ fn get_rethrow_strat<const N: usize>(
     get_byte_from_file(&layer.strats_path(), total_index)
 }
 
-fn get_score<const N: usize>(
+enum Strategy {
+    Rethrow(u8),
+    Cell(usize),
+}
+
+fn get_combined_strat<const N: usize>(
+    cells: &[bool],
+    dice: &DiceThrow,
+    throws_left: usize,
+    points_above: usize,
+) -> Strategy {
+    let [na, nb, _, lb, ai, bi] = match N {
+        5 => get_state_indices5(cells, points_above),
+        6 => get_state_indices6(cells, points_above),
+        _ => panic!(),
+    };
+
+    let lt = amt_dice_combinations::<N>();
+    let ti = dice.get_index();
+
+    let total_index = (ai * lb + bi) * lt + ti;
+
+    let layer = Layer::<N, true> {
+        na,
+        nb,
+        nt: throws_left,
+        scores: None,
+        strats: None,
+    };
+
+    let byte = get_byte_from_file(&layer.strats_path(), total_index);
+
+    if (byte & 128) != 0 {
+        Strategy::Rethrow(byte & !128)
+    } else {
+        Strategy::Cell(byte as usize)
+    }
+}
+
+fn get_score<const N: usize, const X: bool>(
     cells: &[bool],
     dice: &DiceThrow,
     points_above: usize,
@@ -311,7 +350,7 @@ fn get_score<const N: usize>(
 
     let total_index = (ai * lb + bi) * lt + ti;
 
-    let layer = Layer::<N, false> {
+    let layer = Layer::<N, X> {
         na,
         nb,
         nt: throws_left,
@@ -347,7 +386,7 @@ pub fn get_total_score<const N: usize>(points: &[Option<usize>]) -> usize {
     total
 }
 
-pub fn start<const N: usize>()
+pub fn start<const N: usize, const X: bool>()
 where
     [(); cell_from_dice::<N>()]:,
     [(); cell_from_dice::<N>() - 6]:,
@@ -370,9 +409,9 @@ where
     let mut throws_left = 2;
 
     println!("Starting throw:\n{}", dice);
-    println!("Throws left: {throws_left}");
 
     'outer: loop {
+        println!("Throws left: {throws_left}");
         print!("> ");
         stdout().flush().unwrap();
         let mut buffer = String::new();
@@ -396,7 +435,11 @@ where
                 let pts = dice.cell_score::<N>(index);
                 points[index] = Some(pts);
                 display_points::<N>(&points, None, None);
-                throws_left = 2;
+                if X {
+                    throws_left += 2;
+                } else {
+                    throws_left = 2;
+                }
                 dice = DiceThrow::throw(N);
                 println!("Current dice:\n{}", dice);
                 println!("Throws left: {throws_left}");
@@ -419,7 +462,51 @@ where
                 let points_above =
                     points.iter().take(6).filter_map(|x| x.as_ref()).sum();
 
-                if throws_left == 0 {
+                if X {
+                    match get_combined_strat::<N>(
+                        &filled_cells,
+                        &dice,
+                        throws_left,
+                        points_above,
+                    ) {
+                        Strategy::Cell(ind) => {
+                            let score = dice.cell_score::<N>(ind);
+
+                            println!(
+                                "Putting {} points in {}.",
+                                score,
+                                get_index_name::<N>(ind)
+                            );
+
+                            points[ind] = Some(score);
+                            display_points::<N>(&points, None, None);
+
+                            dice = DiceThrow::throw(N);
+                            throws_left += 2;
+
+                            println!("New throw:\n{}", dice);
+                        }
+                        Strategy::Rethrow(reroll) => {
+                            println!(
+                                "Rethrowing:\n{}",
+                                dice.get_subthrow(reroll)
+                            );
+
+                            let rethrow =
+                                DiceThrow::throw(reroll.count_ones() as usize);
+
+                            dice = dice.overwrite_reroll_dyn::<N>(
+                                reroll,
+                                &rethrow
+                                    .into_ordered_dice()
+                                    .collect::<Vec<_>>(),
+                            );
+
+                            println!("To give:\n{}", dice);
+                            throws_left -= 1;
+                        }
+                    }
+                } else if throws_left == 0 {
                     let ind =
                         get_cell_strat::<N>(&filled_cells, &dice, points_above);
 
@@ -466,7 +553,7 @@ where
                 let points_above =
                     points.iter().take(6).filter_map(|x| x.as_ref()).sum();
 
-                if let Some(rem_score) = get_score::<N>(
+                if let Some(rem_score) = get_score::<N, X>(
                     &filled_cells,
                     &dice,
                     points_above,
@@ -497,8 +584,8 @@ where
                 let points_above =
                     points.iter().take(6).filter_map(|x| x.as_ref()).sum();
 
-                match throws_left {
-                    0 => {
+                match (throws_left, X) {
+                    (0, false) => {
                         let ind = get_cell_strat::<N>(
                             &filled_cells,
                             &throw,
@@ -513,7 +600,7 @@ where
                             get_index_name::<N>(ind)
                         );
                     }
-                    1 | 2 => {
+                    (1 | 2, false) => {
                         let reroll = get_rethrow_strat::<N>(
                             &filled_cells,
                             &throw,
@@ -523,10 +610,29 @@ where
 
                         println!("Rethrow:\n{}", throw.get_subthrow(reroll));
                     }
+                    (_, true) => match get_combined_strat::<N>(
+                        &filled_cells,
+                        &throw,
+                        throws_left,
+                        points_above,
+                    ) {
+                        Strategy::Cell(ind) => {
+                            let score = throw.cell_score::<N>(ind);
+
+                            println!(
+                                "Put {} points in {}.",
+                                score,
+                                get_index_name::<N>(ind)
+                            );
+                        }
+                        Strategy::Rethrow(reroll) => {
+                            println!("Rethrow:\n{}", throw.get_subthrow(reroll))
+                        }
+                    },
                     _ => unreachable!(),
                 }
 
-                if let Some(rem_score) = get_score::<N>(
+                if let Some(rem_score) = get_score::<N, X>(
                     &filled_cells,
                     &throw,
                     points_above,
@@ -543,7 +649,7 @@ where
                     points.iter().map(|x| x.is_some()).collect();
                 let points_above =
                     points.iter().take(6).filter_map(|x| x.as_ref()).sum();
-                if let Some(rem_score) = get_score::<N>(
+                if let Some(rem_score) = get_score::<N, X>(
                     &filled_cells,
                     &dice,
                     points_above,
@@ -559,7 +665,7 @@ where
                     points.iter().map(|x| x.is_some()).collect();
                 let points_above =
                     points.iter().take(6).filter_map(|x| x.as_ref()).sum();
-                if let Some(rem_score) = get_score::<N>(
+                if let Some(rem_score) = get_score::<N, X>(
                     &filled_cells,
                     &dice,
                     points_above,

@@ -25,13 +25,36 @@ fn main() {
     let args: Vec<_> = env::args().collect();
 
     match args.get(1).unwrap_or(&"".to_owned()).as_str() {
-        "guide-5" => start::<5>(),
-        "guide-6" => start::<6>(),
+        "guide-5" => start::<5, false>(),
+        "guide-5x" => start::<5, true>(),
+        "guide-6" => start::<6, false>(),
         "compute-strats-5" => solve_5dice(),
         "compute-strats-5x" => solve_5dicex(),
         "compute-strats-6" => solve_6dice(),
         "expected-score-5" => {
             let mut layer = Layer::<5, false> {
+                na: 0,
+                nb: 0,
+                nt: 2,
+                scores: None,
+                strats: None,
+            };
+
+            layer.load_scores();
+            let scores = layer.scores.unwrap();
+
+            let mut score = 0.0;
+
+            for (i, &(_, prob)) in DICE_DISTR.5.iter().enumerate() {
+                let prob = prob as f64 / DICE_DIVISOR[5] as f64;
+
+                score += scores[[0, 0, i]] as f64 * prob;
+            }
+
+            println!("Expected score for 5 dice: {score:.2}");
+        }
+        "expected-score-5x" => {
+            let mut layer = Layer::<5, true> {
                 na: 0,
                 nb: 0,
                 nt: 2,
