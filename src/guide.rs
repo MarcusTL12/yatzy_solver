@@ -122,36 +122,36 @@ fn display_points<const N: usize>(
     );
 }
 
-fn get_yatzy_index<const N: usize>(name: &str) -> usize {
+fn get_yatzy_index<const N: usize>(name: &str) -> Option<usize> {
     match (N, name) {
-        (_, "1s") => 0,
-        (_, "2s") => 1,
-        (_, "3s") => 2,
-        (_, "4s") => 3,
-        (_, "5s") => 4,
-        (_, "6s") => 5,
-        (_, "1p") => 6,
-        (_, "2p") => 7,
-        (6, "3p") => 8,
-        (5, "3l") => 8,
-        (6, "3l") => 9,
-        (5, "4l") => 9,
-        (6, "4l") => 10,
-        (6, "5l") => 11,
-        (5, "ls") => 10,
-        (6, "ls") => 12,
-        (5, "ss") => 11,
-        (6, "ss") => 13,
-        (6, "fs") => 14,
-        (5, "hs") => 12,
-        (6, "ht") => 15,
-        (6, "hs") => 16,
-        (6, "tr") => 17,
-        (5, "ch" | "sj") => 13,
-        (6, "ch" | "sj") => 18,
-        (5, "yz") => 14,
-        (6, "yz") => 19,
-        _ => unreachable!(),
+        (_, "1s") => Some(0),
+        (_, "2s") => Some(1),
+        (_, "3s") => Some(2),
+        (_, "4s") => Some(3),
+        (_, "5s") => Some(4),
+        (_, "6s") => Some(5),
+        (_, "1p") => Some(6),
+        (_, "2p") => Some(7),
+        (6, "3p") => Some(8),
+        (5, "3l") => Some(8),
+        (6, "3l") => Some(9),
+        (5, "4l") => Some(9),
+        (6, "4l") => Some(10),
+        (6, "5l") => Some(11),
+        (5, "ls") => Some(10),
+        (6, "ls") => Some(12),
+        (5, "ss") => Some(11),
+        (6, "ss") => Some(13),
+        (6, "fs") => Some(14),
+        (5, "hs") => Some(12),
+        (6, "ht") => Some(15),
+        (6, "hs") => Some(16),
+        (6, "tr") => Some(17),
+        (5, "ch" | "sj") => Some(13),
+        (6, "ch" | "sj") => Some(18),
+        (5, "yz") => Some(14),
+        (6, "yz") => Some(19),
+        _ => None,
     }
 }
 
@@ -425,29 +425,36 @@ where
             ["exit" | "q"] => break,
             ["display", "points"] => display_points::<N>(&points, None, None),
             ["set", "points", cell, pts] | ["sp", cell, pts] => {
-                let index = get_yatzy_index::<N>(cell);
-                let pts = pts.parse().unwrap();
-                points[index] = Some(pts);
-                display_points::<N>(&points, None, None);
+                if let Some(index) = get_yatzy_index::<N>(cell) {
+                    let pts = pts.parse().unwrap();
+                    points[index] = Some(pts);
+                    display_points::<N>(&points, None, None);
+                } else {
+                    println!("Invalid cell name!");
+                }
             }
             ["put", "dice", cell] => {
-                let index = get_yatzy_index::<N>(cell);
-                let pts = dice.cell_score::<N>(index);
-                points[index] = Some(pts);
-                display_points::<N>(&points, None, None);
-                if X {
-                    throws_left += 2;
+                if let Some(index) = get_yatzy_index::<N>(cell) {
+                    let pts = dice.cell_score::<N>(index);
+                    points[index] = Some(pts);
+                    display_points::<N>(&points, None, None);
+                    if X {
+                        throws_left += 2;
+                    } else {
+                        throws_left = 2;
+                    }
+                    dice = DiceThrow::throw(N);
+                    println!("Current dice:\n{}", dice);
                 } else {
-                    throws_left = 2;
+                    println!("Invalid cell name!");
                 }
-                dice = DiceThrow::throw(N);
-                println!("Current dice:\n{}", dice);
-                println!("Throws left: {throws_left}");
             }
             ["clear", "points", cell] => {
-                let index = get_yatzy_index::<N>(cell);
-
-                points[index] = None;
+                if let Some(index) = get_yatzy_index::<N>(cell) {
+                    points[index] = None;
+                } else {
+                    println!("Invalid cell name!");
+                }
             }
             ["throw", n] => {
                 let n = n.parse().unwrap();
@@ -727,7 +734,6 @@ where
                 throws_left -= 1;
 
                 println!("New throw:\n{}", dice);
-                println!("Throws left: {throws_left}");
             }
             ["set", "dice", dice_str] => {
                 if dice_str.len() != N {

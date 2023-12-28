@@ -28,6 +28,7 @@ fn main() {
         "guide-5" => start::<5, false>(),
         "guide-5x" => start::<5, true>(),
         "guide-6" => start::<6, false>(),
+        "guide-6x" => start::<6, true>(),
         "compute-strats-5" => solve_5dice(),
         "compute-strats-5x" => solve_5dicex(),
         "compute-strats-6" => solve_6dice(),
