@@ -48,14 +48,10 @@ pub fn solve_5dicex() {
                 } else {
                     let mut prev_above_layer = layers
                         .get_mut([na + 1, nb, nt + 2])
-                        .unwrap_or(&mut Some(Layer::empty()))
-                        .take()
-                        .unwrap();
+                        .map_or_else(Layer::empty, |l| l.take().unwrap());
                     let mut prev_below_layer = layers
                         .get_mut([na, nb + 1, nt + 2])
-                        .unwrap_or(&mut Some(Layer::empty()))
-                        .take()
-                        .unwrap();
+                        .map_or_else(Layer::empty, |l| l.take().unwrap());
                     let mut prev_throw_layer = layers
                         .get_mut([na, nb, nt.wrapping_sub(1)])
                         .map(|x| x.take().unwrap());
