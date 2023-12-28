@@ -7,7 +7,7 @@ use dice_distributions::{DICE_DISTR, DICE_DIVISOR};
 use guide::start;
 use macrosolver::{
     outcore::{solve_5dice, solve_6dice, Layer},
-    outcorex::solve_5dicex,
+    outcorex::{solve_5dicex, solve_6dicex},
 };
 use simulation::{simulate_n_5, simulate_n_6};
 
@@ -31,6 +31,7 @@ fn main() {
         "compute-strats-5" => solve_5dice(),
         "compute-strats-5x" => solve_5dicex(),
         "compute-strats-6" => solve_6dice(),
+        "compute-strats-6x" => solve_6dicex(),
         "expected-score-5" => {
             let mut layer = Layer::<5, false> {
                 na: 0,
