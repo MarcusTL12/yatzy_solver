@@ -43,7 +43,7 @@ yatzy               => yz
 fn tostr(points: &[Option<usize>], ind: &mut usize) -> String {
     let ans = match points[*ind] {
         None => "".to_owned(),
-        Some(x) if x == 0 => "-".to_owned(),
+        Some(0) => "-".to_owned(),
         Some(x) => format!("{}", x),
     };
     *ind += 1;

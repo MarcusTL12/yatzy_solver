@@ -3,6 +3,7 @@ use std::{
     hash::Hash,
 };
 
+use arrayvec::ArrayVec;
 use itertools::iproduct;
 use once_cell::sync::Lazy;
 
@@ -24,8 +25,21 @@ fn a_levels<const N: usize>() -> AboveLevelsType {
     {
         let x = [i1, i2, i3, i4, i5, i6];
         let xb = x.map(|x| x >= 0);
-        let xv = x.zip(xb).map(|(x, b)| x * b as i32);
-        let xs = xv.zip([1, 2, 3, 4, 5, 6]).map(|(x, n)| x * n);
+        let xv = x
+            .iter()
+            .zip(&xb)
+            .map(|(x, &b)| x * b as i32)
+            .collect::<ArrayVec<_, 6>>()
+            .into_inner()
+            .unwrap();
+
+        let xs = xv
+            .iter()
+            .zip([1, 2, 3, 4, 5, 6])
+            .map(|(x, n)| x * n)
+            .collect::<ArrayVec<_, 6>>()
+            .into_inner()
+            .unwrap();
 
         let n = xb.into_iter().filter(|&x| x).count();
         let s = points_above::<N>().min(xs.iter().sum::<i32>() as usize);

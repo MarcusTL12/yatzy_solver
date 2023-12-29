@@ -1,4 +1,4 @@
-#![feature(array_zip, split_array, generic_const_exprs)]
+#![feature(split_array, generic_const_exprs)]
 #![allow(incomplete_features)]
 
 use std::slice::from_raw_parts_mut;
