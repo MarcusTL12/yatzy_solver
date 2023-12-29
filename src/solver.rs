@@ -1,7 +1,7 @@
 use ndarray::{Array3, Zip};
 
 use crate::{
-    dice_distributions::{DICE_DISTR, DICE_DIVISOR, DICE_ORDER_MAP},
+    dice_distributions::{DICE_DISTR, DICE_DIVISOR, DICE_ORDER_MAP, dice_order_map_6},
     dice_throw::DiceThrow,
     level_ordering::{
         ABOVE_LEVELS_5, ABOVE_LEVELS_6, BELOW_LEVELS_5, BELOW_LEVELS_6,
@@ -287,6 +287,7 @@ pub fn solve_layer_type1_6dice(
     (scores, strats)
 }
 
+// Major bottleneck for computing strats
 fn loop_rerolls_6<const M: usize, const N: usize>(
     dice_distr: &[([u8; N], u32); M],
     throw: &DiceThrow,
@@ -299,7 +300,8 @@ fn loop_rerolls_6<const M: usize, const N: usize>(
     for &(rethrow, prob) in dice_distr {
         let new_throw = throw.overwrite_reroll::<6, N>(reroll, rethrow);
 
-        let new_ti = DICE_ORDER_MAP.6[&new_throw.collect_dice()];
+        // let new_ti = DICE_ORDER_MAP.6[&new_throw.collect_dice()];
+        let new_ti = dice_order_map_6(new_throw.collect_dice());
 
         let prob = prob as f64 / DICE_DIVISOR[N] as f64;
 
