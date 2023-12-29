@@ -133,7 +133,7 @@ fn main() {
                 strats: None,
             };
 
-            let mut prev_above = if na > 0 {
+            let mut prev_above = if na < 6 {
                 Layer::<6, true> {
                     na: na + 1,
                     nb,
@@ -145,7 +145,7 @@ fn main() {
                 Layer::empty()
             };
 
-            let mut prev_below = if nb > 0 {
+            let mut prev_below = if nb < 14 {
                 Layer::<6, true> {
                     na,
                     nb: nb + 1,
