@@ -300,7 +300,6 @@ fn loop_rerolls_6<const M: usize, const N: usize>(
     for &(rethrow, prob) in dice_distr {
         let new_throw = throw.overwrite_reroll::<6, N>(reroll, rethrow);
 
-        // let new_ti = DICE_ORDER_MAP.6[&new_throw.collect_dice()];
         let new_ti = dice_order_map_6(new_throw.collect_dice());
 
         let prob = prob as f64 / DICE_DIVISOR[N] as f64;

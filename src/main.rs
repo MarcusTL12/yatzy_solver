@@ -10,6 +10,7 @@ use macrosolver::{
     outcorex::{solve_5dicex, solve_6dicex},
 };
 use simulation::{simulate_n_5, simulate_n_6};
+use solver::solve_layer_6dicex;
 
 pub mod dice_distributions;
 pub mod dice_throw;
@@ -118,6 +119,72 @@ fn main() {
 
             println!("time: {t:.2?}");
             println!("{scores:?}");
+        }
+        "compute-strat-6x" => {
+            let na = args[2].parse().unwrap();
+            let nb = args[3].parse().unwrap();
+            let nt = args[4].parse().unwrap();
+
+            let mut layer = Layer::<6, true> {
+                na,
+                nb,
+                nt,
+                scores: None,
+                strats: None,
+            };
+
+            let mut prev_above = if na > 0 {
+                Layer::<6, true> {
+                    na: na + 1,
+                    nb,
+                    nt: nt + 2,
+                    scores: None,
+                    strats: None,
+                }
+            } else {
+                Layer::empty()
+            };
+
+            let mut prev_below = if nb > 0 {
+                Layer::<6, true> {
+                    na,
+                    nb: nb + 1,
+                    nt: nt + 2,
+                    scores: None,
+                    strats: None,
+                }
+            } else {
+                Layer::empty()
+            };
+
+            let mut prev_throw = (nt > 0).then(|| Layer::<6, true> {
+                na,
+                nb,
+                nt: nt - 1,
+                scores: None,
+                strats: None,
+            });
+
+            prev_above.load_scores();
+            prev_below.load_scores();
+
+            if let Some(l) = &mut prev_throw {
+                l.load_scores();
+            }
+
+            let (scores, strats) = solve_layer_6dicex(
+                na,
+                nb,
+                &prev_above.scores.unwrap(),
+                &prev_below.scores.unwrap(),
+                prev_throw.as_ref().map(|l| l.scores.as_ref().unwrap()),
+            );
+
+            layer.scores = Some(scores);
+            layer.strats = Some(strats);
+
+            layer.save_scores();
+            layer.save_strats();
         }
         _ => panic!(),
     }
