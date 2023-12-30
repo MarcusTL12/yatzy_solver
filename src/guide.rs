@@ -211,16 +211,16 @@ pub fn get_state_indices6(cells: &[bool], points_above: usize) -> [usize; 6] {
     [na, nb, la, lb, ai, bi]
 }
 
-fn get_byte_from_file(filename: &str, index: usize) -> u8 {
-    let mut file = OpenOptions::new().read(true).open(filename).unwrap();
+fn get_byte_from_file(filename: &str, index: usize) -> Option<u8> {
+    let mut file = OpenOptions::new().read(true).open(filename).ok()?;
 
-    file.seek(SeekFrom::Start(index as u64)).unwrap();
+    file.seek(SeekFrom::Start(index as u64)).ok()?;
 
     let mut buf = [0];
 
-    file.read_exact(&mut buf).unwrap();
+    file.read_exact(&mut buf).ok()?;
 
-    buf[0]
+    Some(buf[0])
 }
 
 fn get_float_from_file(filename: &str, index: usize) -> Option<f32> {
@@ -239,7 +239,7 @@ fn get_cell_strat<const N: usize>(
     cells: &[bool],
     dice: &DiceThrow,
     points_above: usize,
-) -> usize
+) -> Option<usize>
 where
     [(); cell_from_dice::<N>()]:,
     [(); cell_from_dice::<N>() - 6]:,
@@ -263,7 +263,7 @@ where
         strats: None,
     };
 
-    get_byte_from_file(&layer.strats_path(), total_index) as usize
+    get_byte_from_file(&layer.strats_path(), total_index).map(|x| x as usize)
 }
 
 fn get_rethrow_strat<const N: usize>(
@@ -271,7 +271,7 @@ fn get_rethrow_strat<const N: usize>(
     dice: &DiceThrow,
     throws_left: usize,
     points_above: usize,
-) -> u8 {
+) -> Option<u8> {
     let [na, nb, _, lb, ai, bi] = match N {
         5 => get_state_indices5(cells, points_above),
         6 => get_state_indices6(cells, points_above),
@@ -304,7 +304,7 @@ fn get_combined_strat<const N: usize>(
     dice: &DiceThrow,
     throws_left: usize,
     points_above: usize,
-) -> Strategy {
+) -> Option<Strategy> {
     let [na, nb, _, lb, ai, bi] = match N {
         5 => get_state_indices5(cells, points_above),
         6 => get_state_indices6(cells, points_above),
@@ -324,13 +324,13 @@ fn get_combined_strat<const N: usize>(
         strats: None,
     };
 
-    let byte = get_byte_from_file(&layer.strats_path(), total_index);
-
-    if (byte & 128) != 0 {
-        Strategy::Rethrow(byte & !128)
-    } else {
-        Strategy::Cell(byte as usize)
-    }
+    get_byte_from_file(&layer.strats_path(), total_index).map(|byte| {
+        if (byte & 128) != 0 {
+            Strategy::Rethrow(byte & !128)
+        } else {
+            Strategy::Cell(byte as usize)
+        }
+    })
 }
 
 fn get_score<const N: usize, const X: bool>(
@@ -412,6 +412,18 @@ where
 
     'outer: loop {
         println!("Throws left: {throws_left}");
+
+        let filled_cells: Vec<_> = points.iter().map(|x| x.is_some()).collect();
+        let points_above =
+            points.iter().take(6).filter_map(|x| x.as_ref()).sum();
+        if let Some(rem_score) =
+            get_score::<N, X>(&filled_cells, &dice, points_above, throws_left)
+        {
+            let tot_score = get_total_score::<N>(&points) as f32 + rem_score;
+
+            println!("expected total score is now {:.2}", tot_score);
+        }
+
         print!("> ");
         stdout().flush().unwrap();
         let mut buffer = String::new();
@@ -476,7 +488,7 @@ where
                         throws_left,
                         points_above,
                     ) {
-                        Strategy::Cell(ind) => {
+                        Some(Strategy::Cell(ind)) => {
                             let score = dice.cell_score::<N>(ind);
 
                             println!(
@@ -493,7 +505,7 @@ where
 
                             println!("New throw:\n{}", dice);
                         }
-                        Strategy::Rethrow(reroll) => {
+                        Some(Strategy::Rethrow(reroll)) => {
                             println!(
                                 "Rethrowing:\n{}",
                                 dice.get_subthrow(reroll)
@@ -512,34 +524,36 @@ where
                             println!("To give:\n{}", dice);
                             throws_left -= 1;
                         }
+                        None => {
+                            println!("Strategy not available for state.");
+                        }
                     }
                 } else if throws_left == 0 {
-                    let ind =
-                        get_cell_strat::<N>(&filled_cells, &dice, points_above);
+                    if let Some(ind) =
+                        get_cell_strat::<N>(&filled_cells, &dice, points_above)
+                    {
+                        let score = dice.cell_score::<N>(ind);
 
-                    let score = dice.cell_score::<N>(ind);
+                        println!(
+                            "Putting {} points in {}.",
+                            score,
+                            get_index_name::<N>(ind)
+                        );
 
-                    println!(
-                        "Putting {} points in {}.",
-                        score,
-                        get_index_name::<N>(ind)
-                    );
+                        points[ind] = Some(score);
+                        display_points::<N>(&points, None, None);
 
-                    points[ind] = Some(score);
-                    display_points::<N>(&points, None, None);
+                        dice = DiceThrow::throw(N);
+                        throws_left = 2;
 
-                    dice = DiceThrow::throw(N);
-                    throws_left = 2;
-
-                    println!("New throw:\n{}", dice);
-                } else {
-                    let reroll = get_rethrow_strat::<N>(
-                        &filled_cells,
-                        &dice,
-                        throws_left,
-                        points_above,
-                    );
-
+                        println!("New throw:\n{}", dice);
+                    }
+                } else if let Some(reroll) = get_rethrow_strat::<N>(
+                    &filled_cells,
+                    &dice,
+                    throws_left,
+                    points_above,
+                ) {
                     println!("Rethrowing:\n{}", dice.get_subthrow(reroll));
 
                     let rethrow =
@@ -552,24 +566,8 @@ where
 
                     println!("To give:\n{}", dice);
                     throws_left -= 1;
-                }
-
-                let filled_cells: Vec<_> =
-                    points.iter().map(|x| x.is_some()).collect();
-
-                let points_above =
-                    points.iter().take(6).filter_map(|x| x.as_ref()).sum();
-
-                if let Some(rem_score) = get_score::<N, X>(
-                    &filled_cells,
-                    &dice,
-                    points_above,
-                    throws_left,
-                ) {
-                    let tot_score =
-                        get_total_score::<N>(&points) as f32 + rem_score;
-
-                    println!("expected total score is now {:.2}", tot_score);
+                } else {
+                    println!("Strategy not available for state.");
                 }
             }
             ["advise" | "a", dice_left, dice_str] => {
@@ -593,29 +591,36 @@ where
 
                 match (throws_left, X) {
                     (0, false) => {
-                        let ind = get_cell_strat::<N>(
+                        if let Some(ind) = get_cell_strat::<N>(
                             &filled_cells,
                             &throw,
                             points_above,
-                        );
+                        ) {
+                            let score = throw.cell_score::<N>(ind);
 
-                        let score = throw.cell_score::<N>(ind);
-
-                        println!(
-                            "Put {} points in {}.",
-                            score,
-                            get_index_name::<N>(ind)
-                        );
+                            println!(
+                                "Put {} points in {}.",
+                                score,
+                                get_index_name::<N>(ind)
+                            );
+                        } else {
+                            println!("Strategy not available for state.");
+                        }
                     }
                     (1 | 2, false) => {
-                        let reroll = get_rethrow_strat::<N>(
+                        if let Some(reroll) = get_rethrow_strat::<N>(
                             &filled_cells,
                             &throw,
                             throws_left,
                             points_above,
-                        );
-
-                        println!("Rethrow:\n{}", throw.get_subthrow(reroll));
+                        ) {
+                            println!(
+                                "Rethrow:\n{}",
+                                throw.get_subthrow(reroll)
+                            );
+                        } else {
+                            println!("Strategy not available for state.");
+                        }
                     }
                     (_, true) => match get_combined_strat::<N>(
                         &filled_cells,
@@ -623,7 +628,7 @@ where
                         throws_left,
                         points_above,
                     ) {
-                        Strategy::Cell(ind) => {
+                        Some(Strategy::Cell(ind)) => {
                             let score = throw.cell_score::<N>(ind);
 
                             println!(
@@ -632,23 +637,12 @@ where
                                 get_index_name::<N>(ind)
                             );
                         }
-                        Strategy::Rethrow(reroll) => {
+                        Some(Strategy::Rethrow(reroll)) => {
                             println!("Rethrow:\n{}", throw.get_subthrow(reroll))
                         }
+                        None => println!("Strategy not available for state."),
                     },
                     _ => unreachable!(),
-                }
-
-                if let Some(rem_score) = get_score::<N, X>(
-                    &filled_cells,
-                    &throw,
-                    points_above,
-                    throws_left,
-                ) {
-                    let tot_score =
-                        get_total_score::<N>(&points) as f32 + rem_score;
-
-                    println!("expected total score is now {:.2}", tot_score);
                 }
             }
             ["expected-remaining" | "ex-r"] => {
