@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 use ndarray::{
     linalg::general_mat_mul,
     parallel::prelude::{
@@ -569,6 +571,8 @@ pub fn solve_layer_6dicex(
     let mut scores = Array3::zeros(shape);
     let mut strats = Array3::zeros(shape);
 
+    let timer = Instant::now();
+
     Zip::indexed(&mut scores).and(&mut strats).par_for_each(
         |(ai, bi, ti), cur_score, cur_strat| {
             let (points_above, above_level) = ABOVE_LEVELS_6[na][ai];
@@ -621,6 +625,10 @@ pub fn solve_layer_6dicex(
             *cur_strat = best_cell_i as u8;
         },
     );
+
+    println!("Cells took {:.2?}", timer.elapsed());
+
+    let timer = Instant::now();
 
     // x_b,t2 * A_t1r,t2 = b_b,t1r
 
@@ -676,6 +684,8 @@ pub fn solve_layer_6dicex(
                 },
             );
     }
+
+    println!("Rerolls took {:.2?}", timer.elapsed());
 
     (scores, strats)
 }
