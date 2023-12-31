@@ -1501,9 +1501,8 @@ pub static DICE_REROLL_MATRICES: Lazy<[Array3<f32>; 6]> = Lazy::new(|| {
 
             mat[[0, i]] = 1.0;
 
-            for (reroll, mut row) in
-                dice.into_mask_iter().zip(mat.rows_mut()).skip(1)
-            {
+            for (i, mut row) in mat.rows_mut().into_iter().enumerate().skip(1) {
+                let reroll = i as u8;
                 match reroll.count_ones() {
                     1 => loop_rerolls(
                         &DICE_DISTR.1,
