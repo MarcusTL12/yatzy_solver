@@ -1,6 +1,9 @@
 use std::collections::HashMap;
 
+use ndarray::Array3;
 use once_cell::sync::Lazy;
+
+use crate::dice_throw::DiceThrow;
 
 // To make clippy happy :)
 type DiceDistributionType = (
@@ -1464,3 +1467,100 @@ pub fn dice_order_map_6(k: [u8; 6]) -> usize {
         _ => panic!(),
     }
 }
+
+pub static DICE_REROLL_MATRICES: Lazy<[Array3<f32>; 6]> = Lazy::new(|| {
+    fn loop_rerolls<const M: usize, const N: usize, const K: usize>(
+        distr: &[([u8; K], u32); N],
+        dice: &DiceThrow,
+        reroll: u8,
+        map: &HashMap<[u8; M], usize>,
+        probs: &mut [f32],
+    ) {
+        let div = 1.0 / DICE_DIVISOR[K] as f32;
+
+        for &(rethrow, prob) in distr.iter() {
+            let new_throw = dice.overwrite_reroll::<M, K>(reroll, rethrow);
+
+            let ti = map[&new_throw.collect_dice()];
+
+            probs[ti] = div.mul_add(prob as f32, probs[ti]);
+        }
+    }
+
+    fn make_matrix<const M: usize, const N: usize>(
+        distr: &[([u8; M], u32); N],
+        map: &HashMap<[u8; M], usize>,
+    ) -> Array3<f32> {
+        let mut mat =
+            Array3::from_shape_simple_fn([N, 2usize.pow(M as u32), N], || 0.0);
+
+        for (i, (mut mat, &(dice, _))) in
+            mat.outer_iter_mut().zip(distr).enumerate()
+        {
+            let dice = DiceThrow::from(dice);
+
+            mat[[0, i]] = 1.0;
+
+            for (reroll, mut row) in
+                dice.into_mask_iter().zip(mat.rows_mut()).skip(1)
+            {
+                match reroll.count_ones() {
+                    1 => loop_rerolls(
+                        &DICE_DISTR.1,
+                        &dice,
+                        reroll,
+                        map,
+                        row.as_slice_mut().unwrap(),
+                    ),
+                    2 => loop_rerolls(
+                        &DICE_DISTR.2,
+                        &dice,
+                        reroll,
+                        map,
+                        row.as_slice_mut().unwrap(),
+                    ),
+                    3 => loop_rerolls(
+                        &DICE_DISTR.3,
+                        &dice,
+                        reroll,
+                        map,
+                        row.as_slice_mut().unwrap(),
+                    ),
+                    4 => loop_rerolls(
+                        &DICE_DISTR.4,
+                        &dice,
+                        reroll,
+                        map,
+                        row.as_slice_mut().unwrap(),
+                    ),
+                    5 => loop_rerolls(
+                        &DICE_DISTR.5,
+                        &dice,
+                        reroll,
+                        map,
+                        row.as_slice_mut().unwrap(),
+                    ),
+                    6 => loop_rerolls(
+                        &DICE_DISTR.6,
+                        &dice,
+                        reroll,
+                        map,
+                        row.as_slice_mut().unwrap(),
+                    ),
+                    _ => panic!(),
+                };
+            }
+        }
+
+        mat
+    }
+
+    [
+        make_matrix(&DICE_DISTR.1, &DICE_ORDER_MAP.1),
+        make_matrix(&DICE_DISTR.2, &DICE_ORDER_MAP.2),
+        make_matrix(&DICE_DISTR.3, &DICE_ORDER_MAP.3),
+        make_matrix(&DICE_DISTR.4, &DICE_ORDER_MAP.4),
+        make_matrix(&DICE_DISTR.5, &DICE_ORDER_MAP.5),
+        make_matrix(&DICE_DISTR.6, &DICE_ORDER_MAP.6),
+    ]
+});
