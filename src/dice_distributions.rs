@@ -1468,29 +1468,29 @@ pub fn dice_order_map_6(k: [u8; 6]) -> usize {
     }
 }
 
-pub static DICE_REROLL_MATRICES: Lazy<[Array3<f32>; 6]> = Lazy::new(|| {
+pub static DICE_REROLL_MATRICES: Lazy<[Array3<f64>; 6]> = Lazy::new(|| {
     fn loop_rerolls<const M: usize, const N: usize, const K: usize>(
         distr: &[([u8; K], u32); N],
         dice: &DiceThrow,
         reroll: u8,
         map: &HashMap<[u8; M], usize>,
-        probs: &mut [f32],
+        probs: &mut [f64],
     ) {
-        let div = 1.0 / DICE_DIVISOR[K] as f32;
+        let div = 1.0 / DICE_DIVISOR[K] as f64;
 
         for &(rethrow, prob) in distr.iter() {
             let new_throw = dice.overwrite_reroll::<M, K>(reroll, rethrow);
 
             let ti = map[&new_throw.collect_dice()];
 
-            probs[ti] = div.mul_add(prob as f32, probs[ti]);
+            probs[ti] = div.mul_add(prob as f64, probs[ti]);
         }
     }
 
     fn make_matrix<const M: usize, const N: usize>(
         distr: &[([u8; M], u32); N],
         map: &HashMap<[u8; M], usize>,
-    ) -> Array3<f32> {
+    ) -> Array3<f64> {
         let mut mat =
             Array3::from_shape_simple_fn([N, 2usize.pow(M as u32), N], || 0.0);
 
