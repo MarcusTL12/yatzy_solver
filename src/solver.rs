@@ -518,13 +518,13 @@ pub fn solve_layer_5dicex(
                     let prev_scores =
                         prev_above_layer_scores.slice(s![new_ai, bi, ..]);
 
-                    let expected_score = DICE_DISTR
-                        .5
-                        .iter()
-                        .zip(&prev_scores)
-                        .fold(extra_score as f32, |score, (&(_, prob), x)| {
-                            x.mul_add(prob as f32, score)
-                        });
+                    let expected_score =
+                        DICE_DISTR.5.iter().zip(&prev_scores).fold(
+                            extra_score as f32,
+                            |score, (&(_, prob), x)| {
+                                x.mul_add(prob as f32, score)
+                            },
+                        ) / DICE_DIVISOR[5] as f32;
 
                     if expected_score > *cur_score {
                         *cur_score = expected_score;
@@ -544,13 +544,13 @@ pub fn solve_layer_5dicex(
                     let prev_scores =
                         prev_below_layer_scores.slice(s![ai, new_bi, ..]);
 
-                    let expected_score = DICE_DISTR
-                        .5
-                        .iter()
-                        .zip(&prev_scores)
-                        .fold(extra_score as f32, |score, (&(_, prob), x)| {
-                            x.mul_add(prob as f32, score)
-                        });
+                    let expected_score =
+                        DICE_DISTR.5.iter().zip(&prev_scores).fold(
+                            extra_score as f32,
+                            |score, (&(_, prob), x)| {
+                                x.mul_add(prob as f32, score)
+                            },
+                        ) / DICE_DIVISOR[5] as f32;
 
                     if expected_score > *cur_score {
                         *cur_score = expected_score;
@@ -725,13 +725,13 @@ pub fn solve_layer_6dicex(
                     let prev_scores =
                         prev_above_layer_scores.slice(s![new_ai, bi, ..]);
 
-                    let expected_score = DICE_DISTR
-                        .6
-                        .iter()
-                        .zip(&prev_scores)
-                        .fold(extra_score as f32, |score, (&(_, prob), x)| {
-                            x.mul_add(prob as f32, score)
-                        });
+                    let expected_score =
+                        DICE_DISTR.6.iter().zip(&prev_scores).fold(
+                            extra_score as f32,
+                            |score, (&(_, prob), x)| {
+                                x.mul_add(prob as f32, score)
+                            },
+                        ) / DICE_DIVISOR[6] as f32;
 
                     if expected_score > *cur_score {
                         *cur_score = expected_score;
@@ -751,13 +751,13 @@ pub fn solve_layer_6dicex(
                     let prev_scores =
                         prev_below_layer_scores.slice(s![ai, new_bi, ..]);
 
-                    let expected_score = DICE_DISTR
-                        .6
-                        .iter()
-                        .zip(&prev_scores)
-                        .fold(extra_score as f32, |score, (&(_, prob), x)| {
-                            x.mul_add(prob as f32, score)
-                        });
+                    let expected_score =
+                        DICE_DISTR.6.iter().zip(&prev_scores).fold(
+                            extra_score as f32,
+                            |score, (&(_, prob), x)| {
+                                x.mul_add(prob as f32, score)
+                            },
+                        ) / DICE_DIVISOR[6] as f32;
 
                     if expected_score > *cur_score {
                         *cur_score = expected_score;
