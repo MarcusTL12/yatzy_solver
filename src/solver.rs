@@ -502,12 +502,12 @@ pub fn solve_layer_5dicex(
 
     let timer = Instant::now();
 
-    let above_lookup = ABOVE_LOOKUP_5[na].view();
-    let below_lookup = BELOW_LOOKUP_5[nb].view();
-
     if let (Some(prev_above_layer_scores), Some(prev_below_layer_scores)) =
         (prev_above_layer_scores, prev_below_layer_scores)
     {
+        let above_lookup = ABOVE_LOOKUP_5[na].view();
+        let below_lookup = BELOW_LOOKUP_5[nb].view();
+
         Zip::indexed(&mut scores).and(&mut strats).par_for_each(
             |(ai, bi, ti), cur_score, cur_strat| {
                 for (cell_i, [new_ai, extra_score]) in above_lookup[[ai, ti]]
