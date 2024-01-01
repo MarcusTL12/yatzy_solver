@@ -62,18 +62,23 @@ pub fn solve_5dicex() {
                 } else {
                     let mut prev_above_layer = layers
                         .get_mut([na + 1, nb, nt + 2])
-                        .map_or_else(Layer::empty, |l| l.take().unwrap());
+                        .map(|x| x.take().unwrap());
                     let mut prev_below_layer = layers
                         .get_mut([na, nb + 1, nt + 2])
-                        .map_or_else(Layer::empty, |l| l.take().unwrap());
+                        .map(|x| x.take().unwrap());
                     let mut prev_throw_layer = layers
                         .get_mut([na, nb, nt.wrapping_sub(1)])
                         .map(|x| x.take().unwrap());
 
                     let timer = Instant::now();
 
-                    prev_above_layer.load_scores();
-                    prev_below_layer.load_scores();
+                    if let Some(l) = prev_above_layer.as_mut() {
+                        l.load_scores();
+                    }
+
+                    if let Some(l) = prev_below_layer.as_mut() {
+                        l.load_scores();
+                    }
 
                     if let Some(l) = prev_throw_layer.as_mut() {
                         l.load_scores();
@@ -88,30 +93,37 @@ pub fn solve_5dicex() {
                     let (scores, strats) = solve_layer_5dicex(
                         na,
                         nb,
-                        &prev_above_layer.scores.unwrap(),
-                        &prev_below_layer.scores.unwrap(),
+                        prev_above_layer
+                            .as_ref()
+                            .map(|l| l.scores.as_ref().unwrap().view()),
+                        prev_below_layer
+                            .as_ref()
+                            .map(|l| l.scores.as_ref().unwrap().view()),
                         prev_throw_layer
                             .as_ref()
-                            .map(|l| l.scores.as_ref().unwrap()),
+                            .map(|l| l.scores.as_ref().unwrap().view()),
                     );
 
                     let t = timer.elapsed();
                     println!("Solving took {t:.2?}");
                     compute_timer += t;
 
-                    prev_above_layer.scores = None;
-                    prev_below_layer.scores = None;
-
+                    if let Some(l) = prev_above_layer.as_mut() {
+                        l.scores = None;
+                    }
+                    if let Some(l) = prev_below_layer.as_mut() {
+                        l.scores = None;
+                    }
                     if let Some(l) = prev_throw_layer.as_mut() {
                         l.scores = None;
                     }
 
                     if let Some(l) = layers.get_mut([na + 1, nb, nt + 2]) {
-                        *l = Some(prev_above_layer);
+                        *l = prev_above_layer;
                     }
 
                     if let Some(l) = layers.get_mut([na, nb + 1, nt + 2]) {
-                        *l = Some(prev_below_layer);
+                        *l = prev_below_layer;
                     }
 
                     if let Some(l) =
