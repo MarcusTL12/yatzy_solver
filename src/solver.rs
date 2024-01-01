@@ -590,14 +590,18 @@ pub fn solve_layer_6dicex(
             {
                 let (new_state, extra_score) = state.set_cell(cell_i, throw);
 
-                let new_ai = new_state.get_above_index();
-                let new_bi = new_state.get_below_index();
+                let mut new_ai = ai;
+                let mut new_bi = bi;
 
                 let prev_layer = if cell_i < 6 {
+                    new_ai = new_state.get_above_index();
                     prev_above_layer_scores
                 } else {
+                    new_bi = new_state.get_below_index();
                     prev_below_layer_scores
                 };
+
+                let prev_layer_col = prev_layer.slice(s![new_ai, new_bi, ..]);
 
                 // Expected score will be the extra score (guaranteed)
                 // plus the expected score based on what you might roll next
@@ -605,15 +609,11 @@ pub fn solve_layer_6dicex(
 
                 // For a given choice of cell, looping over possible
                 // throws to find it's expected score.
-                for (new_ti, &(_, prob)) in DICE_DISTR.6.iter().enumerate() {
+                for (&(_, prob), &s) in DICE_DISTR.6.iter().zip(prev_layer_col)
+                {
                     let prob = prob as f64 / DICE_DIVISOR[6] as f64;
 
-                    expected_score = prob.mul_add(
-                        *prev_layer
-                            .get([new_ai, new_bi, new_ti])
-                            .unwrap_or(&0.0) as f64,
-                        expected_score,
-                    );
+                    expected_score = prob.mul_add(s as f64, expected_score);
                 }
 
                 if expected_score >= best_score {
