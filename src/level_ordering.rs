@@ -1,10 +1,8 @@
-use std::{
-    collections::{HashMap, HashSet},
-    hash::Hash,
-};
+use std::collections::HashSet;
 
 use arrayvec::ArrayVec;
 use itertools::iproduct;
+use ndarray::Array2;
 use once_cell::sync::Lazy;
 
 use crate::util::parse_binary;
@@ -56,22 +54,6 @@ fn a_levels<const N: usize>() -> AboveLevelsType {
     })
 }
 
-fn extend_map<T: Eq + Hash + Copy>(map: &mut HashMap<T, usize>, level: &[T]) {
-    map.extend(level.iter().enumerate().map(|(i, &x)| (x, i)))
-}
-
-fn make_map<const N: usize, T: Eq + Hash + Copy>(
-    levels: &[Vec<T>; N],
-) -> HashMap<T, usize> {
-    let mut map = HashMap::new();
-
-    for l in levels {
-        extend_map(&mut map, l);
-    }
-
-    map
-}
-
 fn next_state<const N: usize>(state: &mut [bool; N]) -> bool {
     for b in state.iter_mut() {
         *b = !*b;
@@ -108,13 +90,33 @@ type AboveLevelsType = [Vec<(usize, [bool; 6])>; 7];
 pub static ABOVE_LEVELS_5: Lazy<AboveLevelsType> = Lazy::new(a_levels::<5>);
 pub static ABOVE_LEVELS_6: Lazy<AboveLevelsType> = Lazy::new(a_levels::<6>);
 
-type AboveLevelsMapType = HashMap<(usize, [bool; 6]), usize>;
+pub static ABOVE_LEVELS_5_MAP: Lazy<Array2<usize>> = Lazy::new(|| {
+    let mut map = Array2::zeros([64, 2usize.pow(6)]);
 
-pub static ABOVE_LEVELS_5_MAP: Lazy<AboveLevelsMapType> =
-    Lazy::new(|| make_map(&ABOVE_LEVELS_5));
+    for v in ABOVE_LEVELS_5.iter() {
+        for (i, &(p, b)) in v.iter().enumerate() {
+            let j = parse_binary(&b);
 
-pub static ABOVE_LEVELS_6_MAP: Lazy<AboveLevelsMapType> =
-    Lazy::new(|| make_map(&ABOVE_LEVELS_6));
+            map[[p, j]] = i;
+        }
+    }
+
+    map
+});
+
+pub static ABOVE_LEVELS_6_MAP: Lazy<Array2<usize>> = Lazy::new(|| {
+    let mut map = Array2::zeros([85, 2usize.pow(6)]);
+
+    for v in ABOVE_LEVELS_6.iter() {
+        for (i, &(p, b)) in v.iter().enumerate() {
+            let j = parse_binary(&b);
+
+            map[[p, j]] = i;
+        }
+    }
+
+    map
+});
 
 pub static BELOW_LEVELS_5: Lazy<[Vec<[bool; 9]>; 10]> = Lazy::new(b_levels);
 pub static BELOW_LEVELS_6: Lazy<[Vec<[bool; 14]>; 15]> = Lazy::new(b_levels);

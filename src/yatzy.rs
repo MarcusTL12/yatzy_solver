@@ -161,7 +161,7 @@ impl YatzyState5 {
     pub fn get_above_index(&self) -> usize {
         let pts = points_above::<5>().min(self.points_above);
 
-        ABOVE_LEVELS_5_MAP[&(pts, self.get_above_cells())]
+        ABOVE_LEVELS_5_MAP[[pts, parse_binary(&self.get_above_cells())]]
     }
 
     pub fn get_below_index(&self) -> usize {
@@ -173,7 +173,7 @@ impl YatzyState6 {
     pub fn get_above_index(&self) -> usize {
         let pts = points_above::<6>().min(self.points_above);
 
-        ABOVE_LEVELS_6_MAP[&(pts, self.get_above_cells())]
+        ABOVE_LEVELS_6_MAP[[pts, parse_binary(&self.get_above_cells())]]
     }
 
     pub fn get_below_index(&self) -> usize {
