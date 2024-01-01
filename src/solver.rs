@@ -520,14 +520,14 @@ pub fn solve_layer_5dicex(
 
                     let expected_score =
                         DICE_DISTR.5.iter().zip(&prev_scores).fold(
-                            extra_score as f64 * DICE_DIVISOR[5] as f64,
-                            |score, (&(_, prob), &x)| {
-                                (x as f64).mul_add(prob as f64, score)
+                            extra_score as f32 * DICE_DIVISOR[5] as f32,
+                            |score, (&(_, prob), x)| {
+                                x.mul_add(prob as f32, score)
                             },
-                        ) / DICE_DIVISOR[5] as f64;
+                        ) / DICE_DIVISOR[5] as f32;
 
-                    if expected_score as f32 > *cur_score {
-                        *cur_score = expected_score as f32;
+                    if expected_score > *cur_score {
+                        *cur_score = expected_score;
                         *cur_strat = cell_i as u8;
                     }
                 }
@@ -546,14 +546,14 @@ pub fn solve_layer_5dicex(
 
                     let expected_score =
                         DICE_DISTR.5.iter().zip(&prev_scores).fold(
-                            extra_score as f64 * DICE_DIVISOR[5] as f64,
-                            |score, (&(_, prob), &x)| {
-                                (x as f64).mul_add(prob as f64, score)
+                            extra_score as f32 * DICE_DIVISOR[5] as f32,
+                            |score, (&(_, prob), x)| {
+                                x.mul_add(prob as f32, score)
                             },
-                        ) / DICE_DIVISOR[5] as f64;
+                        ) / DICE_DIVISOR[5] as f32;
 
-                    if expected_score as f32 > *cur_score {
-                        *cur_score = expected_score as f32;
+                    if expected_score > *cur_score {
+                        *cur_score = expected_score;
                         *cur_strat = (cell_i_below + 6) as u8;
                     }
                 }
