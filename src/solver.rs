@@ -1,4 +1,4 @@
-use std::time::Instant;
+use std::{cell::Cell, time::Instant};
 
 use ndarray::{
     linalg::general_mat_mul,
@@ -7,6 +7,7 @@ use ndarray::{
     },
     Array2, Array3, Zip,
 };
+use thread_local::ThreadLocal;
 
 use crate::{
     dice_distributions::{
@@ -638,24 +639,32 @@ pub fn solve_layer_6dicex(
         .unwrap()
         .reversed_axes();
 
-    if let Some(prev_scores) = prev_throw_layer_scores {
-        let mut buf =
-            Array2::from_shape_simple_fn([n_bi, N_DICE_THROWS * 64], || 0.0);
+    let tls = ThreadLocal::new();
 
-        for ((mut scores, mut strats), prev_scores) in scores
+    if let Some(prev_scores) = prev_throw_layer_scores {
+        scores
             .outer_iter_mut()
+            .into_par_iter()
             .zip(strats.outer_iter_mut())
             .zip(prev_scores.outer_iter())
-        {
-            general_mat_mul(1.0, &prev_scores, &a_mat, 0.0, &mut buf);
+            .for_each(|((mut scores, mut strats), prev_scores)| {
+                let buf_cell = tls.get_or(|| {
+                    Cell::new(Array2::from_shape_simple_fn(
+                        [n_bi, N_DICE_THROWS * 64],
+                        || 0.0,
+                    ))
+                });
 
-            let buf3 =
-                buf.view().into_shape([n_bi, N_DICE_THROWS, 64]).unwrap();
+                let mut buf = buf_cell.take();
 
-            Zip::from(&mut scores)
-                .and(&mut strats)
-                .and(buf3.rows())
-                .par_for_each(|score, strat, row| {
+                general_mat_mul(1.0, &prev_scores, &a_mat, 0.0, &mut buf);
+
+                let buf3 =
+                    buf.view().into_shape([n_bi, N_DICE_THROWS, 64]).unwrap();
+
+                for ((score, strat), row) in
+                    scores.iter_mut().zip(strats.iter_mut()).zip(buf3.rows())
+                {
                     let mut best_score = *score;
                     let mut do_reroll = false;
                     let mut best_reroll = 0;
@@ -672,8 +681,10 @@ pub fn solve_layer_6dicex(
                         *score = best_score;
                         *strat = best_reroll as u8 | 128;
                     }
-                });
-        }
+                }
+
+                buf_cell.set(buf);
+            });
     }
 
     println!("Rerolls took {:.2?}", timer.elapsed());
