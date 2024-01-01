@@ -7,6 +7,8 @@ use arrayvec::ArrayVec;
 use itertools::iproduct;
 use once_cell::sync::Lazy;
 
+use crate::util::parse_binary;
+
 pub const fn points_above<const N: usize>() -> usize {
     match N {
         5 => 63,
@@ -117,7 +119,30 @@ pub static ABOVE_LEVELS_6_MAP: Lazy<AboveLevelsMapType> =
 pub static BELOW_LEVELS_5: Lazy<[Vec<[bool; 9]>; 10]> = Lazy::new(b_levels);
 pub static BELOW_LEVELS_6: Lazy<[Vec<[bool; 14]>; 15]> = Lazy::new(b_levels);
 
-pub static BELOW_LEVELS_5_MAP: Lazy<HashMap<[bool; 9], usize>> =
-    Lazy::new(|| make_map(&BELOW_LEVELS_5));
-pub static BELOW_LEVELS_6_MAP: Lazy<HashMap<[bool; 14], usize>> =
-    Lazy::new(|| make_map(&BELOW_LEVELS_6));
+pub static BELOW_LEVELS_5_MAP: Lazy<Vec<usize>> = Lazy::new(|| {
+    let mut map = vec![0; 2usize.pow(9)];
+
+    for v in BELOW_LEVELS_5.iter() {
+        for (i, b) in v.iter().enumerate() {
+            let j = parse_binary(b);
+
+            map[j] = i;
+        }
+    }
+
+    map
+});
+
+pub static BELOW_LEVELS_6_MAP: Lazy<Vec<usize>> = Lazy::new(|| {
+    let mut map = vec![0; 2usize.pow(14)];
+
+    for v in BELOW_LEVELS_6.iter() {
+        for (i, b) in v.iter().enumerate() {
+            let j = parse_binary(b);
+
+            map[j] = i;
+        }
+    }
+
+    map
+});

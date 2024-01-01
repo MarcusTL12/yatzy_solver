@@ -6,7 +6,7 @@ use crate::{
         points_above, ABOVE_LEVELS_5_MAP, ABOVE_LEVELS_6_MAP,
         BELOW_LEVELS_5_MAP, BELOW_LEVELS_6_MAP,
     },
-    util::count_true,
+    util::{count_true, parse_binary},
 };
 
 #[derive(Clone, Debug)]
@@ -165,7 +165,7 @@ impl YatzyState5 {
     }
 
     pub fn get_below_index(&self) -> usize {
-        BELOW_LEVELS_5_MAP[&self.get_below_cells()]
+        BELOW_LEVELS_5_MAP[parse_binary(&self.get_below_cells())]
     }
 }
 
@@ -177,6 +177,6 @@ impl YatzyState6 {
     }
 
     pub fn get_below_index(&self) -> usize {
-        BELOW_LEVELS_6_MAP[&self.get_below_cells()]
+        BELOW_LEVELS_6_MAP[parse_binary(&self.get_below_cells())]
     }
 }
