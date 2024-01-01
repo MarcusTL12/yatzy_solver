@@ -627,7 +627,7 @@ pub fn solve_layer_5dicex(
 
 type AboveLookupType = [Array2<[Option<[usize; 2]>; 6]>; 6];
 
-static ABOVE_LOOKUP6: Lazy<AboveLookupType> = Lazy::new(|| {
+static ABOVE_LOOKUP_6: Lazy<AboveLookupType> = Lazy::new(|| {
     let mut res = array::from_fn(|na| {
         Array2::from_shape_simple_fn(
             [ABOVE_LEVELS_6[na].len(), DICE_DISTR.6.len()],
@@ -660,7 +660,7 @@ static ABOVE_LOOKUP6: Lazy<AboveLookupType> = Lazy::new(|| {
     res
 });
 
-static BELOW_LOOKUP6: Lazy<[Array2<Option<usize>>; 14]> = Lazy::new(|| {
+static BELOW_LOOKUP_6: Lazy<[Array2<Option<usize>>; 14]> = Lazy::new(|| {
     let mut res = array::from_fn(|nb| {
         Array2::from_shape_simple_fn([BELOW_LEVELS_6[nb].len(), 14], || None)
     });
@@ -693,9 +693,9 @@ static BELOW_PTS_LOOKUP_6: Lazy<Array2<usize>> = Lazy::new(|| {
 pub fn solve_layer_6dicex(
     na: usize,
     nb: usize,
-    prev_above_layer_scores: &Array3<f32>,
-    prev_below_layer_scores: &Array3<f32>,
-    prev_throw_layer_scores: Option<&Array3<f32>>,
+    prev_above_layer_scores: Option<ArrayView3<f32>>,
+    prev_below_layer_scores: Option<ArrayView3<f32>>,
+    prev_throw_layer_scores: Option<ArrayView3<f32>>,
 ) -> (Array3<f32>, Array3<u8>) {
     const N_DICE_THROWS: usize = DICE_DISTR.6.len();
 
@@ -709,60 +709,64 @@ pub fn solve_layer_6dicex(
 
     let timer = Instant::now();
 
-    let above_lookup = ABOVE_LOOKUP6[na].view();
-    let below_lookup = BELOW_LOOKUP6[nb].view();
+    if let (Some(prev_above_layer_scores), Some(prev_below_layer_scores)) =
+        (prev_above_layer_scores, prev_below_layer_scores)
+    {
+        let above_lookup = ABOVE_LOOKUP_6[na].view();
+        let below_lookup = BELOW_LOOKUP_6[nb].view();
 
-    Zip::indexed(&mut scores).and(&mut strats).par_for_each(
-        |(ai, bi, ti), cur_score, cur_strat| {
-            for (cell_i, [new_ai, extra_score]) in above_lookup[[ai, ti]]
-                .iter()
-                .enumerate()
-                .filter_map(|(i, x)| x.map(|x| (i, x)))
-            {
-                let prev_scores =
-                    prev_above_layer_scores.slice(s![new_ai, bi, ..]);
-
-                let expected_score = DICE_DISTR
-                    .6
+        Zip::indexed(&mut scores).and(&mut strats).par_for_each(
+            |(ai, bi, ti), cur_score, cur_strat| {
+                for (cell_i, [new_ai, extra_score]) in above_lookup[[ai, ti]]
                     .iter()
-                    .zip(&prev_scores)
-                    .fold(extra_score as f32, |score, (&(_, prob), x)| {
-                        x.mul_add(prob as f32, score)
-                    });
+                    .enumerate()
+                    .filter_map(|(i, x)| x.map(|x| (i, x)))
+                {
+                    let prev_scores =
+                        prev_above_layer_scores.slice(s![new_ai, bi, ..]);
 
-                if expected_score > *cur_score {
-                    *cur_score = expected_score;
-                    *cur_strat = cell_i as u8;
+                    let expected_score = DICE_DISTR
+                        .6
+                        .iter()
+                        .zip(&prev_scores)
+                        .fold(extra_score as f32, |score, (&(_, prob), x)| {
+                            x.mul_add(prob as f32, score)
+                        });
+
+                    if expected_score > *cur_score {
+                        *cur_score = expected_score;
+                        *cur_strat = cell_i as u8;
+                    }
                 }
-            }
 
-            let extra_scores = BELOW_PTS_LOOKUP_6.slice(s![ti, ..]);
+                let extra_scores = BELOW_PTS_LOOKUP_6.slice(s![ti, ..]);
 
-            for (cell_i_below, new_bi, extra_score) in below_lookup
-                .slice(s![bi, ..])
-                .iter()
-                .zip(extra_scores)
-                .enumerate()
-                .filter_map(|(i, (x, &y))| x.map(|x| (i, x, y)))
-            {
-                let prev_scores =
-                    prev_below_layer_scores.slice(s![ai, new_bi, ..]);
-
-                let expected_score = DICE_DISTR
-                    .6
+                for (cell_i_below, new_bi, extra_score) in below_lookup
+                    .slice(s![bi, ..])
                     .iter()
-                    .zip(&prev_scores)
-                    .fold(extra_score as f32, |score, (&(_, prob), x)| {
-                        x.mul_add(prob as f32, score)
-                    });
+                    .zip(extra_scores)
+                    .enumerate()
+                    .filter_map(|(i, (x, &y))| x.map(|x| (i, x, y)))
+                {
+                    let prev_scores =
+                        prev_below_layer_scores.slice(s![ai, new_bi, ..]);
 
-                if expected_score > *cur_score {
-                    *cur_score = expected_score;
-                    *cur_strat = (cell_i_below + 6) as u8;
+                    let expected_score = DICE_DISTR
+                        .6
+                        .iter()
+                        .zip(&prev_scores)
+                        .fold(extra_score as f32, |score, (&(_, prob), x)| {
+                            x.mul_add(prob as f32, score)
+                        });
+
+                    if expected_score > *cur_score {
+                        *cur_score = expected_score;
+                        *cur_strat = (cell_i_below + 6) as u8;
+                    }
                 }
-            }
-        },
-    );
+            },
+        );
+    }
 
     println!("Cells took {:.2?}", timer.elapsed());
 

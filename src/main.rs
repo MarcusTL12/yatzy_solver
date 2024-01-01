@@ -133,29 +133,21 @@ fn main() {
                 strats: None,
             };
 
-            let mut prev_above = if na < 6 {
-                Layer::<6, true> {
-                    na: na + 1,
-                    nb,
-                    nt: nt + 2,
-                    scores: None,
-                    strats: None,
-                }
-            } else {
-                Layer::empty()
-            };
+            let mut prev_above = (nb < 6).then(|| Layer::<6, true> {
+                na: na + 1,
+                nb,
+                nt: nt + 2,
+                scores: None,
+                strats: None,
+            });
 
-            let mut prev_below = if nb < 14 {
-                Layer::<6, true> {
-                    na,
-                    nb: nb + 1,
-                    nt: nt + 2,
-                    scores: None,
-                    strats: None,
-                }
-            } else {
-                Layer::empty()
-            };
+            let mut prev_below = (nb < 14).then(|| Layer::<6, true> {
+                na,
+                nb: nb + 1,
+                nt: nt + 2,
+                scores: None,
+                strats: None,
+            });
 
             let mut prev_throw = (nt > 0).then(|| Layer::<6, true> {
                 na,
@@ -165,9 +157,12 @@ fn main() {
                 strats: None,
             });
 
-            prev_above.load_scores();
-            prev_below.load_scores();
-
+            if let Some(l) = &mut prev_above {
+                l.load_scores();
+            }
+            if let Some(l) = &mut prev_below {
+                l.load_scores();
+            }
             if let Some(l) = &mut prev_throw {
                 l.load_scores();
             }
@@ -175,9 +170,15 @@ fn main() {
             let (scores, strats) = solve_layer_6dicex(
                 na,
                 nb,
-                &prev_above.scores.unwrap(),
-                &prev_below.scores.unwrap(),
-                prev_throw.as_ref().map(|l| l.scores.as_ref().unwrap()),
+                prev_above
+                    .as_ref()
+                    .map(|l| l.scores.as_ref().unwrap().view()),
+                prev_below
+                    .as_ref()
+                    .map(|l| l.scores.as_ref().unwrap().view()),
+                prev_throw
+                    .as_ref()
+                    .map(|l| l.scores.as_ref().unwrap().view()),
             );
 
             layer.scores = Some(scores);
