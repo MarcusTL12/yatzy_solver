@@ -639,50 +639,41 @@ pub fn solve_layer_6dicex(
         .reversed_axes();
 
     if let Some(prev_scores) = prev_throw_layer_scores {
-        scores
+        let mut buf =
+            Array2::from_shape_simple_fn([n_bi, N_DICE_THROWS * 64], || 0.0);
+
+        for ((mut scores, mut strats), prev_scores) in scores
             .outer_iter_mut()
-            .into_par_iter()
             .zip(strats.outer_iter_mut())
             .zip(prev_scores.outer_iter())
-            .for_each_init(
-                || {
-                    Array2::from_shape_simple_fn(
-                        [n_bi, N_DICE_THROWS * 64],
-                        || 0.0,
-                    )
-                },
-                |buf, ((mut scores, mut strats), prev_scores)| {
-                    general_mat_mul(1.0, &prev_scores, &a_mat, 0.0, buf);
+        {
+            general_mat_mul(1.0, &prev_scores, &a_mat, 0.0, &mut buf);
 
-                    let buf3 = buf
-                        .view()
-                        .into_shape([n_bi, N_DICE_THROWS, 64])
-                        .unwrap();
+            let buf3 =
+                buf.view().into_shape([n_bi, N_DICE_THROWS, 64]).unwrap();
 
-                    for ((score, strat), row) in scores
-                        .iter_mut()
-                        .zip(strats.iter_mut())
-                        .zip(buf3.rows())
-                    {
-                        let mut best_score = *score;
-                        let mut do_reroll = false;
-                        let mut best_reroll = 0;
+            Zip::from(&mut scores)
+                .and(&mut strats)
+                .and(buf3.rows())
+                .par_for_each(|score, strat, row| {
+                    let mut best_score = *score;
+                    let mut do_reroll = false;
+                    let mut best_reroll = 0;
 
-                        for (i, &sc) in row.iter().enumerate() {
-                            if sc > best_score {
-                                best_score = sc;
-                                do_reroll = true;
-                                best_reroll = i;
-                            }
-                        }
-
-                        if do_reroll {
-                            *score = best_score;
-                            *strat = best_reroll as u8 | 128;
+                    for (i, &sc) in row.iter().enumerate() {
+                        if sc > best_score {
+                            best_score = sc;
+                            do_reroll = true;
+                            best_reroll = i;
                         }
                     }
-                },
-            );
+
+                    if do_reroll {
+                        *score = best_score;
+                        *strat = best_reroll as u8 | 128;
+                    }
+                });
+        }
     }
 
     println!("Rerolls took {:.2?}", timer.elapsed());

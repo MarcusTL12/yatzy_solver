@@ -1,8 +1,10 @@
 use std::{
     fs::create_dir_all,
+    thread,
     time::{Duration, Instant},
 };
 
+use crossbeam::channel::bounded;
 use ndarray::Array3;
 
 use crate::{
@@ -158,6 +160,18 @@ pub fn solve_6dicex() {
     let mut save_timer = Duration::ZERO;
     let mut compute_timer = Duration::ZERO;
 
+    let (ins_send, ins_rec) = bounded::<Layer<6, true>>(2);
+    let (res_send, res_rec) = bounded::<Layer<6, true>>(2);
+
+    thread::spawn(move || {
+        for mut l in ins_rec {
+            l.load_scores();
+            res_send.send(l).unwrap();
+        }
+    });
+
+    let mut loading = 0;
+
     for na in (0..=6).rev() {
         for nb in (0..=14).rev() {
             let nt_max = (na + nb) * 2 + 2;
@@ -171,6 +185,15 @@ pub fn solve_6dicex() {
                 if layer.is_done() {
                     println!("Already done!");
                 } else {
+                    while loading > 0 {
+                        let l = res_rec.recv().unwrap();
+                        let na = l.na;
+                        let nb = l.nb;
+                        let nt = l.nt;
+                        layers[[na, nb, nt]] = Some(l);
+                        loading -= 1;
+                    }
+
                     let mut prev_above_layer = layers
                         .get_mut([na + 1, nb, nt + 2])
                         .map_or_else(Layer::empty, |l| l.take().unwrap());
@@ -180,6 +203,20 @@ pub fn solve_6dicex() {
                     let mut prev_throw_layer = layers
                         .get_mut([na, nb, nt.wrapping_sub(1)])
                         .map(|x| x.take().unwrap());
+
+                    if nt < nt_max {
+                        let next_above_layer = layers
+                            .get_mut([na + 1, nb, nt + 3])
+                            .map_or_else(Layer::empty, |l| l.take().unwrap());
+                        let next_below_layer = layers
+                            .get_mut([na, nb + 1, nt + 3])
+                            .map_or_else(Layer::empty, |l| l.take().unwrap());
+
+                        ins_send.send(next_above_layer).unwrap();
+                        ins_send.send(next_below_layer).unwrap();
+
+                        loading += 2;
+                    }
 
                     let timer = Instant::now();
 
