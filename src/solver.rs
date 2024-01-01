@@ -520,7 +520,7 @@ pub fn solve_layer_5dicex(
 
                     let expected_score =
                         DICE_DISTR.5.iter().zip(&prev_scores).fold(
-                            extra_score as f32,
+                            extra_score as f32 * DICE_DIVISOR[5] as f32,
                             |score, (&(_, prob), x)| {
                                 x.mul_add(prob as f32, score)
                             },
@@ -546,7 +546,7 @@ pub fn solve_layer_5dicex(
 
                     let expected_score =
                         DICE_DISTR.5.iter().zip(&prev_scores).fold(
-                            extra_score as f32,
+                            extra_score as f32 * DICE_DIVISOR[5] as f32,
                             |score, (&(_, prob), x)| {
                                 x.mul_add(prob as f32, score)
                             },
@@ -727,7 +727,7 @@ pub fn solve_layer_6dicex(
 
                     let expected_score =
                         DICE_DISTR.6.iter().zip(&prev_scores).fold(
-                            extra_score as f32,
+                            extra_score as f32 * DICE_DIVISOR[6] as f32,
                             |score, (&(_, prob), x)| {
                                 x.mul_add(prob as f32, score)
                             },
@@ -753,7 +753,7 @@ pub fn solve_layer_6dicex(
 
                     let expected_score =
                         DICE_DISTR.6.iter().zip(&prev_scores).fold(
-                            extra_score as f32,
+                            extra_score as f32 * DICE_DIVISOR[6] as f32,
                             |score, (&(_, prob), x)| {
                                 x.mul_add(prob as f32, score)
                             },
