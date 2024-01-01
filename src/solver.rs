@@ -420,6 +420,69 @@ pub fn solve_layer_type2_6dice(
     (scores, strats)
 }
 
+static ABOVE_LOOKUP_5: Lazy<AboveLookupType> = Lazy::new(|| {
+    let mut res = array::from_fn(|na| {
+        Array2::from_shape_simple_fn(
+            [ABOVE_LEVELS_5[na].len(), DICE_DISTR.5.len()],
+            || [None; 6],
+        )
+    });
+
+    for na in 0..6 {
+        for (ai, &(points_above, above_level)) in
+            ABOVE_LEVELS_5[na].iter().enumerate()
+        {
+            let state =
+                State::<15>::from((above_level, [false; 9], points_above));
+
+            for (ti, &(tr, _)) in DICE_DISTR.5.iter().enumerate() {
+                let throw = DiceThrow::from(tr);
+
+                for cell_i in (0..6).filter(|&i| !above_level[i]) {
+                    let (new_state, extra_score) =
+                        state.set_cell(cell_i, throw);
+
+                    let new_ai = new_state.get_above_index();
+
+                    res[na][[ai, ti]][cell_i] = Some([new_ai, extra_score]);
+                }
+            }
+        }
+    }
+
+    res
+});
+
+static BELOW_LOOKUP_5: Lazy<[Array2<Option<usize>>; 9]> = Lazy::new(|| {
+    let mut res = array::from_fn(|nb| {
+        Array2::from_shape_simple_fn([BELOW_LEVELS_5[nb].len(), 9], || None)
+    });
+
+    for nb in 0..9 {
+        for (bi, &below_level) in BELOW_LEVELS_5[nb].iter().enumerate() {
+            for cell_i in (6..9 + 6).filter(|&i| !below_level[i - 6]) {
+                let mut new_level = below_level;
+                new_level[cell_i - 6] = true;
+                let state = State::<15>::from(([false; 6], new_level, 0));
+
+                let new_bi = state.get_below_index();
+
+                res[nb][[bi, cell_i - 6]] = Some(new_bi);
+            }
+        }
+    }
+
+    res
+});
+
+static BELOW_PTS_LOOKUP_5: Lazy<Array2<usize>> = Lazy::new(|| {
+    Array2::from_shape_fn([DICE_DISTR.5.len(), 9], |(ti, cell_i)| {
+        let throw = DiceThrow::from(DICE_DISTR.5[ti].0);
+
+        throw.cell_score::<5>(cell_i + 6)
+    })
+});
+
 pub fn solve_layer_5dicex(
     na: usize,
     nb: usize,
@@ -439,56 +502,58 @@ pub fn solve_layer_5dicex(
 
     let timer = Instant::now();
 
+    let above_lookup = ABOVE_LOOKUP_5[na].view();
+    let below_lookup = BELOW_LOOKUP_5[nb].view();
+
     Zip::indexed(&mut scores).and(&mut strats).par_for_each(
         |(ai, bi, ti), cur_score, cur_strat| {
-            let (points_above, above_level) = ABOVE_LEVELS_5[na][ai];
-            let below_level = BELOW_LEVELS_5[nb][bi];
-            let throw = DiceThrow::from(DICE_DISTR.5[ti].0);
-            let state =
-                State::<15>::from((above_level, below_level, points_above));
-
-            let mut best_score = 0.0;
-            let mut best_cell_i = 255;
-
-            for (cell_i, _) in
-                state.cells.iter().enumerate().filter(|(_, &cell)| !cell)
+            for (cell_i, [new_ai, extra_score]) in above_lookup[[ai, ti]]
+                .iter()
+                .enumerate()
+                .filter_map(|(i, x)| x.map(|x| (i, x)))
             {
-                let (new_state, extra_score) = state.set_cell(cell_i, throw);
+                let prev_scores =
+                    prev_above_layer_scores.slice(s![new_ai, bi, ..]);
 
-                let new_ai = new_state.get_above_index();
-                let new_bi = new_state.get_below_index();
+                let expected_score = DICE_DISTR
+                    .5
+                    .iter()
+                    .zip(&prev_scores)
+                    .fold(extra_score as f32, |score, (&(_, prob), x)| {
+                        x.mul_add(prob as f32, score)
+                    });
 
-                let prev_layer = if cell_i < 6 {
-                    prev_above_layer_scores
-                } else {
-                    prev_below_layer_scores
-                };
-
-                // Expected score will be the extra score (guaranteed)
-                // plus the expected score based on what you might roll next
-                let mut expected_score = extra_score as f64;
-
-                // For a given choice of cell, looping over possible
-                // throws to find it's expected score.
-                for (new_ti, &(_, prob)) in DICE_DISTR.5.iter().enumerate() {
-                    let prob = prob as f64 / DICE_DIVISOR[5] as f64;
-
-                    expected_score = prob.mul_add(
-                        *prev_layer
-                            .get([new_ai, new_bi, new_ti])
-                            .unwrap_or(&0.0) as f64,
-                        expected_score,
-                    );
-                }
-
-                if expected_score >= best_score {
-                    best_score = expected_score;
-                    best_cell_i = cell_i;
+                if expected_score > *cur_score {
+                    *cur_score = expected_score;
+                    *cur_strat = cell_i as u8;
                 }
             }
 
-            *cur_score = best_score as f32;
-            *cur_strat = best_cell_i as u8;
+            let extra_scores = BELOW_PTS_LOOKUP_5.slice(s![ti, ..]);
+
+            for (cell_i_below, new_bi, extra_score) in below_lookup
+                .slice(s![bi, ..])
+                .iter()
+                .zip(extra_scores)
+                .enumerate()
+                .filter_map(|(i, (x, &y))| x.map(|x| (i, x, y)))
+            {
+                let prev_scores =
+                    prev_below_layer_scores.slice(s![ai, new_bi, ..]);
+
+                let expected_score = DICE_DISTR
+                    .5
+                    .iter()
+                    .zip(&prev_scores)
+                    .fold(extra_score as f32, |score, (&(_, prob), x)| {
+                        x.mul_add(prob as f32, score)
+                    });
+
+                if expected_score > *cur_score {
+                    *cur_score = expected_score;
+                    *cur_strat = (cell_i_below + 6) as u8;
+                }
+            }
         },
     );
 
@@ -613,7 +678,7 @@ static BELOW_LOOKUP6: Lazy<[Array2<Option<usize>>; 14]> = Lazy::new(|| {
     res
 });
 
-static BELOW_PTS_LOOKUP6: Lazy<Array2<usize>> = Lazy::new(|| {
+static BELOW_PTS_LOOKUP_6: Lazy<Array2<usize>> = Lazy::new(|| {
     Array2::from_shape_fn([DICE_DISTR.6.len(), 14], |(ti, cell_i)| {
         let throw = DiceThrow::from(DICE_DISTR.6[ti].0);
 
@@ -667,7 +732,7 @@ pub fn solve_layer_6dicex(
                 }
             }
 
-            let extra_scores = BELOW_PTS_LOOKUP6.slice(s![ti, ..]);
+            let extra_scores = BELOW_PTS_LOOKUP_6.slice(s![ti, ..]);
 
             for (cell_i_below, new_bi, extra_score) in below_lookup
                 .slice(s![bi, ..])
