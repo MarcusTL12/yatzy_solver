@@ -11,7 +11,7 @@ use crate::{
     },
     macrosolver::{
         outcore::{make_thin_layers_5dice, make_thin_layers_6dice, Layer},
-        outcorex::make_thin_layers_5dicex,
+        outcorex::{make_thin_layers_5dicex, make_thin_layers_6dicex},
     },
     yatzy::cell_from_dice,
 };
@@ -40,6 +40,18 @@ pub fn simulate_n_5x(scores: &mut [u32]) {
     });
 }
 
+pub fn simulate_n_6x(scores: &mut [u32]) {
+    let mut layers = make_thin_layers_6dicex();
+
+    for layer in &mut layers {
+        layer.as_mut().unwrap().load_strats();
+    }
+
+    scores.par_iter_mut().for_each(|score| {
+        *score = get_total_score::<5>(&simulate_6x(&layers)) as u32
+    });
+}
+
 pub fn simulate_n_5_full(scores: &mut [[u32; 15]]) {
     let mut layers = make_thin_layers_5dice();
 
@@ -63,6 +75,20 @@ pub fn simulate_n_5x_full(scores: &mut [[u32; 15]]) {
 
     scores.par_iter_mut().for_each(|score| {
         for (score, somescore) in score.iter_mut().zip(simulate_5x(&layers)) {
+            *score = somescore.unwrap() as u32;
+        }
+    });
+}
+
+pub fn simulate_n_6x_full(scores: &mut [[u32; 20]]) {
+    let mut layers = make_thin_layers_6dicex();
+
+    for layer in &mut layers {
+        layer.as_mut().unwrap().load_strats();
+    }
+
+    scores.par_iter_mut().for_each(|score| {
+        for (score, somescore) in score.iter_mut().zip(simulate_6x(&layers)) {
             *score = somescore.unwrap() as u32;
         }
     });
@@ -286,6 +312,49 @@ fn simulate_5x(layers: &Array3<Option<Layer<5, true>>>) -> [Option<usize>; 15] {
                 dice = dice.overwrite_reroll_dyn::<5>(
                     reroll,
                     &rethrow.into_ordered_dice().collect::<ArrayVec<_, 5>>(),
+                );
+
+                throws_left -= 1;
+            }
+        }
+    }
+}
+
+fn simulate_6x(layers: &Array3<Option<Layer<6, true>>>) -> [Option<usize>; 20] {
+    let mut points = [None; 20];
+
+    let mut dice = DiceThrow::throw(6);
+
+    let mut throws_left = 2;
+
+    loop {
+        if points.iter().all(|x| x.is_some()) {
+            break points;
+        }
+
+        let filled_cells = points.map(|x| x.is_some());
+        let points_above =
+            points.iter().take(6).filter_map(|x| x.as_ref()).sum();
+
+        match get_combined_strat::<6>(
+            &filled_cells,
+            &dice,
+            throws_left,
+            points_above,
+            layers,
+        ) {
+            Strategy::Cell(ind) => {
+                let score = dice.cell_score::<6>(ind);
+                points[ind] = Some(score);
+                dice = DiceThrow::throw(5);
+                throws_left += 2;
+            }
+            Strategy::Rethrow(reroll) => {
+                let rethrow = DiceThrow::throw(reroll.count_ones() as usize);
+
+                dice = dice.overwrite_reroll_dyn::<6>(
+                    reroll,
+                    &rethrow.into_ordered_dice().collect::<ArrayVec<_, 6>>(),
                 );
 
                 throws_left -= 1;
