@@ -43,12 +43,12 @@ pub fn simulate_n_5x(scores: &mut [u32]) {
 pub fn simulate_n_6x(scores: &mut [u32]) {
     let mut layers = make_thin_layers_6dicex();
 
-    for layer in &mut layers {
+    layers.par_iter_mut().for_each(|layer| {
         layer.as_mut().unwrap().load_strats();
-    }
+    });
 
     scores.par_iter_mut().for_each(|score| {
-        *score = get_total_score::<5>(&simulate_6x(&layers)) as u32
+        *score = get_total_score::<6>(&simulate_6x(&layers)) as u32
     });
 }
 
@@ -346,7 +346,7 @@ fn simulate_6x(layers: &Array3<Option<Layer<6, true>>>) -> [Option<usize>; 20] {
             Strategy::Cell(ind) => {
                 let score = dice.cell_score::<6>(ind);
                 points[ind] = Some(score);
-                dice = DiceThrow::throw(5);
+                dice = DiceThrow::throw(6);
                 throws_left += 2;
             }
             Strategy::Rethrow(reroll) => {
