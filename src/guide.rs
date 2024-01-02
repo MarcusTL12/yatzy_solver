@@ -410,19 +410,30 @@ where
 
     println!("Starting throw:\n{}", dice);
 
+    let mut print_score = false;
+
     'outer: loop {
         println!("Throws left: {throws_left}");
 
         let filled_cells: Vec<_> = points.iter().map(|x| x.is_some()).collect();
         let points_above =
             points.iter().take(6).filter_map(|x| x.as_ref()).sum();
-        if let Some(rem_score) =
-            get_score::<N, X>(&filled_cells, &dice, points_above, throws_left)
-        {
-            let tot_score = get_total_score::<N>(&points) as f32 + rem_score;
 
-            println!("expected total score is now {:.2}", tot_score);
+        if print_score {
+            if let Some(rem_score) = get_score::<N, X>(
+                &filled_cells,
+                &dice,
+                points_above,
+                throws_left,
+            ) {
+                let tot_score =
+                    get_total_score::<N>(&points) as f32 + rem_score;
+
+                println!("expected total score is now {:.2}", tot_score);
+            }
         }
+
+        print_score = true;
 
         print!("> ");
         stdout().flush().unwrap();
@@ -444,6 +455,8 @@ where
                 } else {
                     println!("Invalid cell name!");
                 }
+
+                print_score = false;
             }
             ["put", "dice", cell] => {
                 if let Some(index) = get_yatzy_index::<N>(cell) {
@@ -473,6 +486,7 @@ where
                 let throw = DiceThrow::throw(n);
                 println!("{}", throw);
                 dice = throw;
+                print_score = false;
             }
             ["auto"] | [] => {
                 let filled_cells: Vec<_> =
@@ -571,7 +585,11 @@ where
                 }
             }
             ["advise" | "a", dice_left, dice_str] => {
-                let throws_left: usize = dice_left.parse().unwrap();
+                let throws_left_local: usize = if *dice_left == "x" {
+                    throws_left
+                } else {
+                    dice_left.parse().unwrap()
+                };
                 if dice_str.len() != N {
                     continue 'outer;
                 }
@@ -589,7 +607,7 @@ where
                 let points_above =
                     points.iter().take(6).filter_map(|x| x.as_ref()).sum();
 
-                match (throws_left, X) {
+                match (throws_left_local, X) {
                     (0, false) => {
                         if let Some(ind) = get_cell_strat::<N>(
                             &filled_cells,
@@ -611,7 +629,7 @@ where
                         if let Some(reroll) = get_rethrow_strat::<N>(
                             &filled_cells,
                             &throw,
-                            throws_left,
+                            throws_left_local,
                             points_above,
                         ) {
                             println!(
@@ -625,10 +643,12 @@ where
                     (_, true) => match get_combined_strat::<N>(
                         &filled_cells,
                         &throw,
-                        throws_left,
+                        throws_left_local,
                         points_above,
                     ) {
                         Some(Strategy::Cell(ind)) => {
+                            throws_left = throws_left_local + 2;
+
                             let score = throw.cell_score::<N>(ind);
 
                             println!(
@@ -638,12 +658,27 @@ where
                             );
                         }
                         Some(Strategy::Rethrow(reroll)) => {
+                            throws_left = throws_left_local - 1;
                             println!("Rethrow:\n{}", throw.get_subthrow(reroll))
                         }
                         None => println!("Strategy not available for state."),
                     },
                     _ => unreachable!(),
                 }
+
+                if let Some(rem_score) = get_score::<N, X>(
+                    &filled_cells,
+                    &throw,
+                    points_above,
+                    throws_left_local,
+                ) {
+                    let tot_score =
+                        get_total_score::<N>(&points) as f32 + rem_score;
+
+                    println!("expected total score is then {:.2}", tot_score);
+                }
+
+                print_score = false;
             }
             ["expected-remaining" | "ex-r"] => {
                 let filled_cells: Vec<_> =
