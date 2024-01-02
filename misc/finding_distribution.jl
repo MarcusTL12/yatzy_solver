@@ -27,6 +27,14 @@ function find_dist_6(n)
     data
 end
 
+function find_dist_6x(n)
+    data = zeros(Int32, n)
+
+    ccall((:extern_simulate_n_6x, yz), Cvoid, (Ptr{Int32}, Int), data, n)
+
+    data
+end
+
 function find_dist_5_full(n)
     data = zeros(Int32, 15, n)
 
