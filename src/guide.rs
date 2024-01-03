@@ -1,6 +1,8 @@
 use std::{
-    fs::OpenOptions,
+    fs::{remove_file, OpenOptions},
     io::{stdin, stdout, Read, Seek, SeekFrom, Write},
+    process::Command,
+    time::Instant,
 };
 
 use crate::{
@@ -9,7 +11,7 @@ use crate::{
     level_ordering::{
         ABOVE_LEVELS_5, ABOVE_LEVELS_6, BELOW_LEVELS_5, BELOW_LEVELS_6,
     },
-    macrosolver::outcore::Layer,
+    macrosolver::outcore::{Layer, PREFIX},
     yatzy::{cell_from_dice, State},
 };
 
@@ -235,6 +237,72 @@ fn get_float_from_file(filename: &str, index: usize) -> Option<f32> {
     Some(f32::from_le_bytes(buf))
 }
 
+fn decompress_file<const N: usize, const X: bool>(
+    na: usize,
+    nb: usize,
+    nt: usize,
+    pref_str: &str,
+) -> Option<String> {
+    let typename = match (N, X) {
+        (5, false) => "5",
+        (6, false) => "6",
+        (5, true) => "5x",
+        (6, true) => "6x",
+        _ => panic!(),
+    };
+    let archive_name = format!("{pref_str}.7z");
+    let path = format!("{}/{typename}/{archive_name}", PREFIX.as_str());
+    let internal_path = format!("{pref_str}/{na}_{nb}_{nt}.dat");
+    let outpath = format!("{}/{typename}/", PREFIX.as_str());
+    let outarg = format!("-o{outpath}");
+
+    println!("Decompressing from archive: ");
+    let timer = Instant::now();
+
+    Command::new("7z")
+        .args(["e", &path, &internal_path, &outarg])
+        .output()
+        .ok()?;
+
+    println!("took {:.2?}", timer.elapsed());
+
+    Some(outpath)
+}
+
+fn get_byte_from_compressed_strats<const N: usize, const X: bool>(
+    na: usize,
+    nb: usize,
+    nt: usize,
+    index: usize,
+) -> Option<u8> {
+    let outpath = decompress_file::<N, X>(na, nb, nt, "strats")?;
+
+    let dat_file = format!("{outpath}/{na}_{nb}_{nt}.dat");
+
+    let byte = get_byte_from_file(&dat_file, index);
+
+    remove_file(dat_file).ok()?;
+
+    byte
+}
+
+fn get_float_from_compressed_scores<const N: usize, const X: bool>(
+    na: usize,
+    nb: usize,
+    nt: usize,
+    index: usize,
+) -> Option<f32> {
+    let outpath = decompress_file::<N, X>(na, nb, nt, "scores")?;
+
+    let dat_file = format!("{outpath}/{na}_{nb}_{nt}.dat");
+
+    let float = get_float_from_file(&dat_file, index);
+
+    remove_file(dat_file).ok()?;
+
+    float
+}
+
 fn get_cell_strat<const N: usize>(
     cells: &[bool],
     dice: &DiceThrow,
@@ -263,7 +331,12 @@ where
         strats: None,
     };
 
-    get_byte_from_file(&layer.strats_path(), total_index).map(|x| x as usize)
+    if let Some(x) = get_byte_from_file(&layer.strats_path(), total_index) {
+        Some(x)
+    } else {
+        get_byte_from_compressed_strats::<N, false>(na, nb, 0, total_index)
+    }
+    .map(|x| x as usize)
 }
 
 fn get_rethrow_strat<const N: usize>(
@@ -291,7 +364,16 @@ fn get_rethrow_strat<const N: usize>(
         strats: None,
     };
 
-    get_byte_from_file(&layer.strats_path(), total_index)
+    if let Some(x) = get_byte_from_file(&layer.strats_path(), total_index) {
+        Some(x)
+    } else {
+        get_byte_from_compressed_strats::<N, false>(
+            na,
+            nb,
+            throws_left,
+            total_index,
+        )
+    }
 }
 
 pub enum Strategy {
@@ -324,7 +406,20 @@ fn get_combined_strat<const N: usize>(
         strats: None,
     };
 
-    get_byte_from_file(&layer.strats_path(), total_index).map(|byte| {
+    let byte = if let Some(x) =
+        get_byte_from_file(&layer.strats_path(), total_index)
+    {
+        Some(x)
+    } else {
+        get_byte_from_compressed_strats::<N, true>(
+            na,
+            nb,
+            throws_left,
+            total_index,
+        )
+    };
+
+    byte.map(|byte| {
         if (byte & 128) != 0 {
             Strategy::Rethrow(byte & !128)
         } else {
@@ -358,7 +453,16 @@ fn get_score<const N: usize, const X: bool>(
         strats: None,
     };
 
-    get_float_from_file(&layer.scores_path(), total_index)
+    if let Some(x) = get_float_from_file(&layer.scores_path(), total_index) {
+        Some(x)
+    } else {
+        get_float_from_compressed_scores::<N, X>(
+            na,
+            nb,
+            throws_left,
+            total_index,
+        )
+    }
 }
 
 pub fn get_total_score<const N: usize>(points: &[Option<usize>]) -> usize {
