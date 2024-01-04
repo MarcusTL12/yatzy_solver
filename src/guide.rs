@@ -1,9 +1,11 @@
 use std::{
-    fs::{remove_file, OpenOptions},
+    fs::OpenOptions,
     io::{stdin, stdout, Read, Seek, SeekFrom, Write},
-    process::Command,
+    process::{Command, Stdio},
     time::Instant,
 };
+
+use arrayvec::ArrayVec;
 
 use crate::{
     dice_distributions::amt_dice_combinations,
@@ -237,12 +239,17 @@ fn get_float_from_file(filename: &str, index: usize) -> Option<f32> {
     Some(f32::from_le_bytes(buf))
 }
 
-fn decompress_file<const N: usize, const X: bool>(
+fn get_bytes_from_compressed_file<
+    const N: usize,
+    const X: bool,
+    const M: usize,
+>(
     na: usize,
     nb: usize,
     nt: usize,
     pref_str: &str,
-) -> Option<String> {
+    index: usize,
+) -> Option<[u8; M]> {
     let typename = match (N, X) {
         (5, false) => "5",
         (6, false) => "6",
@@ -253,20 +260,38 @@ fn decompress_file<const N: usize, const X: bool>(
     let archive_name = format!("{pref_str}.7z");
     let path = format!("{}/{typename}/{archive_name}", PREFIX.as_str());
     let internal_path = format!("{pref_str}/{na}_{nb}_{nt}.dat");
-    let outpath = format!("{}/{typename}/", PREFIX.as_str());
-    let outarg = format!("-o{outpath}");
 
     println!("Decompressing from archive: ");
     let timer = Instant::now();
 
-    Command::new("7z")
-        .args(["e", &path, &internal_path, &outarg])
-        .output()
+    let mut proc = Command::new("7z")
+        .args(["e", &path, &internal_path, "-so"])
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null())
+        .spawn()
         .ok()?;
 
-    println!("took {:.2?}", timer.elapsed());
+    let ret = proc
+        .stdout
+        .take()
+        .unwrap()
+        .bytes()
+        .filter_map(|x| x.ok())
+        .skip(index)
+        .take(M)
+        .collect::<ArrayVec<_, M>>()
+        .into_inner()
+        .ok();
 
-    Some(outpath)
+    proc.kill().unwrap();
+
+    if ret.is_some() {
+        println!("took {:.2?}", timer.elapsed());
+    } else {
+        println!("could not get data from archive")
+    }
+
+    ret
 }
 
 fn get_byte_from_compressed_strats<const N: usize, const X: bool>(
@@ -275,15 +300,8 @@ fn get_byte_from_compressed_strats<const N: usize, const X: bool>(
     nt: usize,
     index: usize,
 ) -> Option<u8> {
-    let outpath = decompress_file::<N, X>(na, nb, nt, "strats")?;
-
-    let dat_file = format!("{outpath}/{na}_{nb}_{nt}.dat");
-
-    let byte = get_byte_from_file(&dat_file, index);
-
-    remove_file(dat_file).ok()?;
-
-    byte
+    get_bytes_from_compressed_file::<N, X, 1>(na, nb, nt, "strats", index)
+        .map(|bytes| bytes[0])
 }
 
 fn get_float_from_compressed_scores<const N: usize, const X: bool>(
@@ -292,15 +310,8 @@ fn get_float_from_compressed_scores<const N: usize, const X: bool>(
     nt: usize,
     index: usize,
 ) -> Option<f32> {
-    let outpath = decompress_file::<N, X>(na, nb, nt, "scores")?;
-
-    let dat_file = format!("{outpath}/{na}_{nb}_{nt}.dat");
-
-    let float = get_float_from_file(&dat_file, index);
-
-    remove_file(dat_file).ok()?;
-
-    float
+    get_bytes_from_compressed_file::<N, X, 4>(na, nb, nt, "scores", index * 4)
+        .map(f32::from_le_bytes)
 }
 
 fn get_cell_strat<const N: usize>(
