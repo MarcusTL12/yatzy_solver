@@ -294,13 +294,90 @@ fn get_bytes_from_compressed_file<
     ret
 }
 
+fn get_bytes_from_segmented_file<
+    const N: usize,
+    const X: bool,
+    const M: usize,
+>(
+    na: usize,
+    nb: usize,
+    nt: usize,
+    pref_str: &str,
+    index: usize,
+) -> Option<[u8; M]> {
+    let typename = match (N, X) {
+        (5, false) => "5",
+        (6, false) => "6",
+        (5, true) => "5x",
+        (6, true) => "6x",
+        _ => panic!(),
+    };
+    let archive_name = format!("{pref_str}.7z");
+    let path = format!("{}/{typename}/{archive_name}", PREFIX.as_str());
+    let chunksize_path = format!("{pref_str}/chunksize.dat");
+
+    println!("Decompressing from segmented archive: ");
+    let timer = Instant::now();
+
+    let chunksize = Command::new("7z")
+        .args(["e", &path, &chunksize_path, "-so"])
+        .output()
+        .ok()?
+        .stdout
+        .bytes()
+        .filter_map(|x| x.ok())
+        .collect::<ArrayVec<_, 8>>()
+        .into_inner()
+        .ok()
+        .map(usize::from_le_bytes)?;
+
+    let chunk_index = index / chunksize;
+    let sub_index = index % chunksize;
+
+    let internal_path = format!("{pref_str}/{na}_{nb}_{nt}.dat.{chunk_index}");
+
+    let mut proc = Command::new("7z")
+        .args(["e", &path, &internal_path, "-so"])
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null())
+        .spawn()
+        .ok()?;
+
+    let ret = proc
+        .stdout
+        .take()
+        .unwrap()
+        .bytes()
+        .filter_map(|x| x.ok())
+        .skip(sub_index)
+        .take(M)
+        .collect::<ArrayVec<_, M>>()
+        .into_inner()
+        .ok();
+
+    proc.kill().unwrap();
+
+    if ret.is_some() {
+        println!("took {:.2?}", timer.elapsed());
+    } else {
+        println!("could not get data from archive")
+    }
+
+    ret
+}
+
 fn get_byte_from_compressed_strats<const N: usize, const X: bool>(
     na: usize,
     nb: usize,
     nt: usize,
     index: usize,
 ) -> Option<u8> {
-    get_bytes_from_compressed_file::<N, X, 1>(na, nb, nt, "strats", index)
+    get_bytes_from_segmented_file::<N, X, 1>(na, nb, nt, "strats", index)
+        .or_else(|| {
+            get_bytes_from_compressed_file::<N, X, 1>(
+                na, nb, nt, "strats", index,
+            )
+        })
         .map(|bytes| bytes[0])
 }
 
@@ -310,7 +387,16 @@ fn get_float_from_compressed_scores<const N: usize, const X: bool>(
     nt: usize,
     index: usize,
 ) -> Option<f32> {
-    get_bytes_from_compressed_file::<N, X, 4>(na, nb, nt, "scores", index * 4)
+    get_bytes_from_segmented_file::<N, X, 4>(na, nb, nt, "scores", index * 4)
+        .or_else(|| {
+            get_bytes_from_compressed_file::<N, X, 4>(
+                na,
+                nb,
+                nt,
+                "scores",
+                index * 4,
+            )
+        })
         .map(f32::from_le_bytes)
 }
 
