@@ -428,12 +428,11 @@ where
         strats: None,
     };
 
-    if let Some(x) = get_byte_from_file(&layer.strats_path(), total_index) {
-        Some(x)
-    } else {
-        get_byte_from_compressed_strats::<N, false>(na, nb, 0, total_index)
-    }
-    .map(|x| x as usize)
+    get_byte_from_file(&layer.strats_path(), total_index)
+        .or_else(|| {
+            get_byte_from_compressed_strats::<N, false>(na, nb, 0, total_index)
+        })
+        .map(|x| x as usize)
 }
 
 fn get_rethrow_strat<const N: usize>(
@@ -461,16 +460,14 @@ fn get_rethrow_strat<const N: usize>(
         strats: None,
     };
 
-    if let Some(x) = get_byte_from_file(&layer.strats_path(), total_index) {
-        Some(x)
-    } else {
+    get_byte_from_file(&layer.strats_path(), total_index).or_else(|| {
         get_byte_from_compressed_strats::<N, false>(
             na,
             nb,
             throws_left,
             total_index,
         )
-    }
+    })
 }
 
 pub enum Strategy {
@@ -503,26 +500,22 @@ fn get_combined_strat<const N: usize>(
         strats: None,
     };
 
-    let byte = if let Some(x) =
-        get_byte_from_file(&layer.strats_path(), total_index)
-    {
-        Some(x)
-    } else {
-        get_byte_from_compressed_strats::<N, true>(
-            na,
-            nb,
-            throws_left,
-            total_index,
-        )
-    };
-
-    byte.map(|byte| {
-        if (byte & 128) != 0 {
-            Strategy::Rethrow(byte & !128)
-        } else {
-            Strategy::Cell(byte as usize)
-        }
-    })
+    get_byte_from_file(&layer.strats_path(), total_index)
+        .or_else(|| {
+            get_byte_from_compressed_strats::<N, true>(
+                na,
+                nb,
+                throws_left,
+                total_index,
+            )
+        })
+        .map(|byte| {
+            if (byte & 128) != 0 {
+                Strategy::Rethrow(byte & !128)
+            } else {
+                Strategy::Cell(byte as usize)
+            }
+        })
 }
 
 fn get_score<const N: usize, const X: bool>(
@@ -550,16 +543,14 @@ fn get_score<const N: usize, const X: bool>(
         strats: None,
     };
 
-    if let Some(x) = get_float_from_file(&layer.scores_path(), total_index) {
-        Some(x)
-    } else {
+    get_float_from_file(&layer.scores_path(), total_index).or_else(|| {
         get_float_from_compressed_scores::<N, X>(
             na,
             nb,
             throws_left,
             total_index,
         )
-    }
+    })
 }
 
 pub fn get_total_score<const N: usize>(points: &[Option<usize>]) -> usize {
