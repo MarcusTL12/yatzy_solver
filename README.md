@@ -292,3 +292,44 @@ memory requirements, this is reduced by a factor 2/3, giving 600 MiB and
 There is also the question of the IO scheduling, which is presumably highly
 storage architecture dependant. The safest is to do all disk IO serially, but
 some speedup can probably be gained by reading simultaneously.
+
+## The objective 2
+
+What if we want to optimize something other than the expected score? If we
+stay within the relm of a single player, as naively involving more players
+would square the state space. An interesting set of measures to optimize would
+be various quantiles, i.e. optimizing the median, 5th percentile, etc.
+Doing this is significantly harder than dealing with only the mean, as we need
+to keep track of the entire probability distribution, or at least pretty good
+approximations of it. In the exact limit this would ammount to storing a
+probability for every whole point score from 0 to the max score which is around
+649 points, or 650 different point scores. Storing 650 times the data would be
+tough, so saving the entire
+distributions for all states would probably not be feasible, but deleting them
+underway could help. At the other end we could approximate the distributions
+using normal distributions, which would only require keeping track of the mean
+and the variance, only doubling the needed data. This would, however, be a
+rather inaccurate approximation as the distributions are pretty "spotty", and
+even the final probability distributions that maximize the mean are very
+multi-peaked and asymmetrical.
+
+### The process 4
+
+If we want to do the keeping track of the entire distributions accurately, we
+need to be able to efficiently store and manipulate the distributions. When
+choosing which cell to put a score into we only really need to keep track of the
+measured quantity (e.g. the 25th percentile) of the previous layers, as we would
+just pick the one with the highest one. However, when chosing which dice to
+rethrow we need the probability distributions of all the reachable states given
+the rethrow, i.e. the distributions for all dice combinations given the board
+state. For 462 dice combinations and distributions of 650 points, this requires
+keeping a 462 * 650 matrix in memory, which should not be too bad. Getting the
+total probability distribution for a given reroll is then a simple matrix-vector
+multiplication between this matrix, and the vector of all the probabilities to
+reach the given states for a certain reroll, which we already store as a matrix
+for effcient solving. This matrix-matrix multiplication will give the matrix
+of different probability distributions for each choice of reroll. Then one would
+calculate the measured quantity for each of them efficiently and find which
+gives the highest. This is a 650x462 * 462x64 matrix multiplication, which is
+very quick to perform. It should also be possible to make this a larger packed
+matrix multiplication to deal with all dice throws at the same time.
