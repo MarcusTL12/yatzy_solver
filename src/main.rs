@@ -4,9 +4,10 @@
 use std::{env, time::Instant};
 
 use dice_distributions::{DICE_DISTR, DICE_DIVISOR};
+use file_segmentation::segment_dir;
 use guide::start;
 use macrosolver::{
-    outcore::{solve_5dice, solve_6dice, Layer},
+    outcore::{solve_5dice, solve_6dice, Layer, PREFIX},
     outcorex::{solve_5dicex, solve_6dicex},
 };
 use simulation::{simulate_n_5, simulate_n_6};
@@ -14,6 +15,7 @@ use solver::solve_layer_6dicex;
 
 pub mod dice_distributions;
 pub mod dice_throw;
+pub mod file_segmentation;
 pub mod guide;
 pub mod level_ordering;
 pub mod macrosolver;
@@ -207,6 +209,17 @@ fn main() {
 
             layer.save_scores();
             layer.save_strats();
+        }
+        "segment" => {
+            let game = &args[2];
+            let dir = &args[3];
+            let chunksize = args[4].parse().unwrap();
+
+            let path = format!("{}/{game}/{dir}/", PREFIX.as_str());
+            let outpath =
+                format!("{}/{game}/{dir}_segmented/", PREFIX.as_str());
+
+            segment_dir(&path, &outpath, chunksize);
         }
         _ => panic!(),
     }
