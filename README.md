@@ -313,6 +313,12 @@ rather inaccurate approximation as the distributions are pretty "spotty", and
 even the final probability distributions that maximize the mean are very
 multi-peaked and asymmetrical.
 
+Even using the full probability distribution for the remaining score, it is hard
+to directly optimize a property of the final probability distribution as you
+only ever have local information. This means that it is hard to maximize the
+95th percentile of the final distribution, but should be doable to maximize the
+95th percentile given the current state.
+
 ### The process 4
 
 If we want to do the keeping track of the entire distributions accurately, we
