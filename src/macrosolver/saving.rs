@@ -8,8 +8,8 @@ use crossbeam::channel::bounded;
 use ndarray::Array3;
 
 use crate::{
-    macrosolver::outcore::{Layer, PREFIX},
-    solver::{solve_layer_5dicex, solve_layer_6dicex},
+    macrosolver::normal::{Layer, PREFIX},
+    solver::{solve_layer_5dice_cells, solve_layer_5dice_throws, solve_layer_6dice_cells, solve_layer_6dice_throws},
 };
 
 pub fn make_thin_layers_5dicex() -> Array3<Option<Layer<5, true>>> {
@@ -85,15 +85,21 @@ pub fn solve_5dicex() {
 
                     let timer = Instant::now();
 
-                    let (scores, strats) = solve_layer_5dicex(
+                    let (mut scores, mut strats) = solve_layer_5dice_cells(
                         na,
                         nb,
-                        &prev_above_layer.scores.unwrap(),
-                        &prev_below_layer.scores.unwrap(),
-                        prev_throw_layer
-                            .as_ref()
-                            .map(|l| l.scores.as_ref().unwrap()),
+                        prev_above_layer.scores.as_ref().unwrap().view(),
+                        prev_below_layer.scores.as_ref().unwrap().view(),
                     );
+
+                    if let Some(prev_throw_layer) = prev_throw_layer.as_ref() {
+                        solve_layer_5dice_throws(
+                            nb,
+                            prev_throw_layer.scores.as_ref().unwrap().view(),
+                            scores.view_mut(),
+                            strats.view_mut(),
+                        )
+                    }
 
                     let t = timer.elapsed();
                     println!("Solving took {t:.2?}");
@@ -233,15 +239,21 @@ pub fn solve_6dicex() {
 
                     let timer = Instant::now();
 
-                    let (scores, strats) = solve_layer_6dicex(
+                    let (mut scores, mut strats) = solve_layer_6dice_cells(
                         na,
                         nb,
-                        &prev_above_layer.scores.unwrap(),
-                        &prev_below_layer.scores.unwrap(),
-                        prev_throw_layer
-                            .as_ref()
-                            .map(|l| l.scores.as_ref().unwrap()),
+                        prev_above_layer.scores.as_ref().unwrap().view(),
+                        prev_below_layer.scores.as_ref().unwrap().view(),
                     );
+
+                    if let Some(prev_throw_layer) = prev_throw_layer.as_ref() {
+                        solve_layer_6dice_throws(
+                            nb,
+                            prev_throw_layer.scores.as_ref().unwrap().view(),
+                            scores.view_mut(),
+                            strats.view_mut(),
+                        )
+                    }
 
                     let t = timer.elapsed();
                     println!("Solving took {t:.2?}");

@@ -10,8 +10,8 @@ use crate::{
         get_state_indices5, get_state_indices6, get_total_score, Strategy,
     },
     macrosolver::{
-        outcore::{make_thin_layers_5dice, make_thin_layers_6dice, Layer},
-        outcorex::{make_thin_layers_5dicex, make_thin_layers_6dicex},
+        normal::{make_thin_layers_5dice, make_thin_layers_6dice, Layer},
+        saving::{make_thin_layers_5dicex, make_thin_layers_6dicex},
     },
     yatzy::cell_from_dice,
 };
@@ -212,7 +212,7 @@ fn simulate_5(layers: &Array3<Option<Layer<5, false>>>) -> [Option<usize>; 15] {
 
             dice = dice.overwrite_reroll_dyn::<5>(
                 reroll,
-                &rethrow.into_ordered_dice().collect::<ArrayVec<_, 5>>(),
+                &rethrow.iter_ordered_dice().collect::<ArrayVec<_, 5>>(),
             );
         }
 
@@ -256,7 +256,7 @@ fn simulate_6(layers: &Array3<Option<Layer<6, false>>>) -> [Option<usize>; 20] {
 
             dice = dice.overwrite_reroll_dyn::<6>(
                 reroll,
-                &rethrow.into_ordered_dice().collect::<ArrayVec<_, 6>>(),
+                &rethrow.iter_ordered_dice().collect::<ArrayVec<_, 6>>(),
             );
         }
 
@@ -311,7 +311,7 @@ fn simulate_5x(layers: &Array3<Option<Layer<5, true>>>) -> [Option<usize>; 15] {
 
                 dice = dice.overwrite_reroll_dyn::<5>(
                     reroll,
-                    &rethrow.into_ordered_dice().collect::<ArrayVec<_, 5>>(),
+                    &rethrow.iter_ordered_dice().collect::<ArrayVec<_, 5>>(),
                 );
 
                 throws_left -= 1;
@@ -354,7 +354,7 @@ fn simulate_6x(layers: &Array3<Option<Layer<6, true>>>) -> [Option<usize>; 20] {
 
                 dice = dice.overwrite_reroll_dyn::<6>(
                     reroll,
-                    &rethrow.into_ordered_dice().collect::<ArrayVec<_, 6>>(),
+                    &rethrow.iter_ordered_dice().collect::<ArrayVec<_, 6>>(),
                 );
 
                 throws_left -= 1;

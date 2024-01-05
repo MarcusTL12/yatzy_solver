@@ -13,7 +13,7 @@ use crate::{
     level_ordering::{
         ABOVE_LEVELS_5, ABOVE_LEVELS_6, BELOW_LEVELS_5, BELOW_LEVELS_6,
     },
-    macrosolver::outcore::{Layer, PREFIX},
+    macrosolver::normal::{Layer, PREFIX},
     yatzy::{cell_from_dice, State},
 };
 
@@ -724,7 +724,7 @@ where
                             dice = dice.overwrite_reroll_dyn::<N>(
                                 reroll,
                                 &rethrow
-                                    .into_ordered_dice()
+                                    .iter_ordered_dice()
                                     .collect::<Vec<_>>(),
                             );
 
@@ -768,7 +768,7 @@ where
 
                     dice = dice.overwrite_reroll_dyn::<N>(
                         reroll,
-                        &rethrow.into_ordered_dice().collect::<Vec<_>>(),
+                        &rethrow.iter_ordered_dice().collect::<Vec<_>>(),
                     );
 
                     println!("To give:\n{}", dice);
@@ -949,7 +949,7 @@ where
 
                 let rethrow: Vec<_> =
                     DiceThrow::throw(mask.count_ones() as usize)
-                        .into_ordered_dice()
+                        .iter_ordered_dice()
                         .collect();
 
                 dice = dice.overwrite_reroll_dyn::<N>(mask, &rethrow);

@@ -17,8 +17,8 @@ use crate::{
         ABOVE_LEVELS_5, ABOVE_LEVELS_6, BELOW_LEVELS_5, BELOW_LEVELS_6,
     },
     solver::{
-        solve_layer_type1_5dice, solve_layer_type1_6dice,
-        solve_layer_type2_5dice, solve_layer_type2_6dice,
+        solve_layer_5dice_cells, solve_layer_5dice_throws,
+        solve_layer_6dice_cells, solve_layer_6dice_throws,
     },
 };
 
@@ -283,11 +283,11 @@ pub fn solve_5dice() {
 
                 let timer = Instant::now();
 
-                let (scores, strats) = solve_layer_type1_5dice(
+                let (scores, strats) = solve_layer_5dice_cells(
                     na,
                     nb,
-                    &prev_above_layer.scores.unwrap(),
-                    &prev_below_layer.scores.unwrap(),
+                    prev_above_layer.scores.as_ref().unwrap().view(),
+                    prev_below_layer.scores.as_ref().unwrap().view(),
                 );
 
                 let t = timer.elapsed();
@@ -343,10 +343,18 @@ pub fn solve_5dice() {
 
                     let timer = Instant::now();
 
-                    let (scores, strats) = solve_layer_type2_5dice(
-                        na,
+                    let mut scores = Array3::zeros(
+                        prev_layer.scores.as_ref().unwrap().dim(),
+                    );
+                    let mut strats = Array3::zeros(
+                        prev_layer.strats.as_ref().unwrap().dim(),
+                    );
+
+                    solve_layer_5dice_throws(
                         nb,
-                        &prev_layer.scores.unwrap(),
+                        prev_layer.scores.as_ref().unwrap().view(),
+                        scores.view_mut(),
+                        strats.view_mut(),
                     );
 
                     let t = timer.elapsed();
@@ -425,11 +433,11 @@ pub fn solve_6dice() {
 
                 let timer = Instant::now();
 
-                let (scores, strats) = solve_layer_type1_6dice(
+                let (scores, strats) = solve_layer_6dice_cells(
                     na,
                     nb,
-                    &prev_above_layer.scores.unwrap(),
-                    &prev_below_layer.scores.unwrap(),
+                    prev_above_layer.scores.as_ref().unwrap().view(),
+                    prev_below_layer.scores.as_ref().unwrap().view(),
                 );
 
                 let t = timer.elapsed();
@@ -486,10 +494,18 @@ pub fn solve_6dice() {
 
                     let timer = Instant::now();
 
-                    let (scores, strats) = solve_layer_type2_6dice(
-                        na,
+                    let mut scores = Array3::zeros(
+                        prev_layer.scores.as_ref().unwrap().dim(),
+                    );
+                    let mut strats = Array3::zeros(
+                        prev_layer.strats.as_ref().unwrap().dim(),
+                    );
+
+                    solve_layer_6dice_throws(
                         nb,
-                        &prev_layer.scores.unwrap(),
+                        prev_layer.scores.as_ref().unwrap().view(),
+                        scores.view_mut(),
+                        strats.view_mut(),
                     );
 
                     let t = timer.elapsed();

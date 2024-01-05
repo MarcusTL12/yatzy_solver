@@ -197,7 +197,7 @@ impl DiceThrow {
         }
     }
 
-    pub fn test_all(&self) {
+    pub fn _test_all(&self) {
         println!("1:                {}", self.ammount_of::<1>());
         println!("2:                {}", self.ammount_of::<2>());
         println!("3:                {}", self.ammount_of::<3>());
@@ -221,7 +221,7 @@ impl DiceThrow {
         println!("yatzy:            {}", self.yatzy());
     }
 
-    pub fn into_sub_throw_iter(self) -> SubThrowIter {
+    pub fn _into_sub_throw_iter(self) -> SubThrowIter {
         SubThrowIter::from(self)
     }
 
@@ -229,31 +229,31 @@ impl DiceThrow {
         (1..=6).map(|i| self[i]).sum()
     }
 
-    pub fn probability(&self) -> f64 {
+    pub fn _probability(&self) -> f64 {
         let amt_dice = self.amt_dice();
 
         let tot = 6usize.pow(amt_dice as u32);
 
-        let perms: usize = factorial(amt_dice);
+        let perms: usize = _factorial(amt_dice);
 
-        let dup_perms: usize = (1..=6).map(|i| factorial(self[i])).product();
+        let dup_perms: usize = (1..=6).map(|i| _factorial(self[i])).product();
 
         let actual_perms = perms / dup_perms;
 
         (actual_perms as f64) / (tot as f64)
     }
 
-    pub fn into_ordered_dice(&self) -> impl Iterator<Item = u8> + '_ {
+    pub fn iter_ordered_dice(&self) -> impl Iterator<Item = u8> + '_ {
         self.dice
             .iter()
             .enumerate()
             .flat_map(|(i, &amt)| (0..amt).map(move |_| (i + 1) as u8))
     }
 
-    pub fn into_ordered_dice_const<const N: usize>(&self) -> [u8; N] {
+    pub fn into_ordered_dice<const N: usize>(self) -> [u8; N] {
         let mut dice = [0; N];
 
-        for (x, y) in dice.iter_mut().zip(self.into_ordered_dice()) {
+        for (x, y) in dice.iter_mut().zip(self.iter_ordered_dice()) {
             *x = y;
         }
 
@@ -264,27 +264,27 @@ impl DiceThrow {
         match self.amt_dice() {
             0 => 0,
             1 => {
-                let dice = self.into_ordered_dice_const::<1>();
+                let dice = self.into_ordered_dice::<1>();
                 DICE_ORDER_MAP.1[&dice]
             }
             2 => {
-                let dice = self.into_ordered_dice_const::<2>();
+                let dice = self.into_ordered_dice::<2>();
                 DICE_ORDER_MAP.2[&dice]
             }
             3 => {
-                let dice = self.into_ordered_dice_const::<3>();
+                let dice = self.into_ordered_dice::<3>();
                 DICE_ORDER_MAP.3[&dice]
             }
             4 => {
-                let dice = self.into_ordered_dice_const::<4>();
+                let dice = self.into_ordered_dice::<4>();
                 DICE_ORDER_MAP.4[&dice]
             }
             5 => {
-                let dice = self.into_ordered_dice_const::<5>();
+                let dice = self.into_ordered_dice::<5>();
                 DICE_ORDER_MAP.5[&dice]
             }
             6 => {
-                let dice = self.into_ordered_dice_const::<6>();
+                let dice = self.into_ordered_dice::<6>();
                 DICE_ORDER_MAP.6[&dice]
             }
             _ => panic!("Unsupported amount of dice!"),
@@ -293,7 +293,7 @@ impl DiceThrow {
 
     pub fn collect_dice<const N: usize>(&self) -> [u8; N] {
         let mut dice = [0; N];
-        for (i, d) in self.into_ordered_dice().take(N).enumerate() {
+        for (i, d) in self.iter_ordered_dice().take(N).enumerate() {
             dice[i] = d;
         }
         dice
@@ -337,12 +337,12 @@ impl DiceThrow {
         Self::from(dice)
     }
 
-    pub fn get_mask(&self, mut sub_throw: DiceThrow) -> u8 {
+    pub fn _get_mask(&self, mut sub_throw: DiceThrow) -> u8 {
         let mut mask = 0;
 
         let bit = 1 << (self.amt_dice() - 1);
 
-        for d in self.into_ordered_dice() {
+        for d in self.iter_ordered_dice() {
             mask >>= 1;
             if sub_throw[d as usize] > 0 {
                 mask |= bit;
@@ -353,14 +353,14 @@ impl DiceThrow {
         mask
     }
 
-    pub fn into_mask_iter(self) -> impl Iterator<Item = u8> {
-        self.into_sub_throw_iter().map(move |st| self.get_mask(st))
+    pub fn _into_mask_iter(self) -> impl Iterator<Item = u8> {
+        self._into_sub_throw_iter().map(move |st| self._get_mask(st))
     }
 
     pub fn get_subthrow(&self, mut mask: u8) -> Self {
         let mut dice = DiceThrow::new();
 
-        for d in self.into_ordered_dice() {
+        for d in self.iter_ordered_dice() {
             if mask & 1 != 0 {
                 dice[d as usize] += 1;
             }
@@ -372,7 +372,7 @@ impl DiceThrow {
     }
 }
 
-fn factorial(n: usize) -> usize {
+fn _factorial(n: usize) -> usize {
     (2..=n).product()
 }
 

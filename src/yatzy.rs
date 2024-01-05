@@ -72,11 +72,11 @@ impl<const CELLS: usize> State<CELLS> {
         *self.cells.rsplit_array_ref().1
     }
 
-    pub fn split_cells(&self) -> ([bool; 6], [bool; CELLS - 6]) {
+    pub fn _split_cells(&self) -> ([bool; 6], [bool; CELLS - 6]) {
         (self.get_above_cells(), self.get_below_cells())
     }
 
-    pub fn get_n_cells(&self) -> usize {
+    pub fn _get_n_cells(&self) -> usize {
         count_true(self.cells)
     }
 
