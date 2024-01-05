@@ -312,9 +312,9 @@ fn get_bytes_from_segmented_file<
         (6, true) => "6x",
         _ => panic!(),
     };
-    let archive_name = format!("{pref_str}.7z");
+    let archive_name = format!("{pref_str}_segmented.7z");
     let path = format!("{}/{typename}/{archive_name}", PREFIX.as_str());
-    let chunksize_path = format!("{pref_str}/chunksize.dat");
+    let chunksize_path = format!("{pref_str}_segmented/chunksize.dat");
 
     println!("Decompressing from segmented archive: ");
     let timer = Instant::now();
@@ -334,7 +334,8 @@ fn get_bytes_from_segmented_file<
     let chunk_index = index / chunksize;
     let sub_index = index % chunksize;
 
-    let internal_path = format!("{pref_str}/{na}_{nb}_{nt}.dat.{chunk_index}");
+    let internal_path =
+        format!("{pref_str}_segmented/{na}_{nb}_{nt}.dat.{chunk_index}");
 
     let mut proc = Command::new("7z")
         .args(["e", &path, &internal_path, "-so"])
