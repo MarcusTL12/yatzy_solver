@@ -14,7 +14,7 @@ pub mod guide;
 pub mod level_ordering;
 pub mod macrosolver;
 pub mod simulation;
-pub mod solver;
+pub mod solvers;
 pub mod util;
 pub mod yatzy;
 

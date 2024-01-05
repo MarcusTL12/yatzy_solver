@@ -9,7 +9,10 @@ use ndarray::Array3;
 
 use crate::{
     macrosolver::normal::{Layer, PREFIX},
-    solver::{solve_layer_5dice_cells, solve_layer_5dice_throws, solve_layer_6dice_cells, solve_layer_6dice_throws},
+    solvers::mean::{
+        solve_layer_5dice_cells, solve_layer_5dice_throws,
+        solve_layer_6dice_cells, solve_layer_6dice_throws,
+    },
 };
 
 pub fn make_thin_layers_5dicex() -> Array3<Option<Layer<5, true>>> {

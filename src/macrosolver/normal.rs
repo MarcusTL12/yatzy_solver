@@ -16,7 +16,7 @@ use crate::{
     level_ordering::{
         ABOVE_LEVELS_5, ABOVE_LEVELS_6, BELOW_LEVELS_5, BELOW_LEVELS_6,
     },
-    solver::{
+    solvers::mean::{
         solve_layer_5dice_cells, solve_layer_5dice_throws,
         solve_layer_6dice_cells, solve_layer_6dice_throws,
     },

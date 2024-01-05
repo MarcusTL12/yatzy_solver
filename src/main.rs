@@ -19,7 +19,7 @@ mod guide;
 mod level_ordering;
 mod macrosolver;
 pub mod simulation;
-mod solver;
+mod solvers;
 mod util;
 mod yatzy;
 
