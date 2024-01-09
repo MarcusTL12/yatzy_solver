@@ -19,7 +19,9 @@ use crate::{
     dice_distributions::{DICE_DISTR, DICE_PROBS_VECTORS},
     level_ordering::{ABOVE_LEVELS_5, BELOW_LEVELS_5},
     macrosolver::Layer,
-    solvers::full::{solve_layer_5dice_cells, solve_layer_5dice_throws},
+    solvers::full::{
+        make_zero_dists, solve_layer_5dice_cells, solve_layer_5dice_throws,
+    },
 };
 
 use super::{floats_to_bytes, floats_to_bytes_mut, measures, PREFIX};
@@ -141,8 +143,6 @@ fn solve_5dice<O: Ord + Add<f32, Output = O> + Clone + Copy>(
                 strats: None,
             };
 
-            let mut prev_scores_full = None;
-
             if (Layer::<5, false> {
                 id: name.to_owned(),
                 na,
@@ -157,82 +157,78 @@ fn solve_5dice<O: Ord + Add<f32, Output = O> + Clone + Copy>(
                 continue;
             }
 
-            if layer.is_done() {
-                println!("Already done!");
-            } else {
-                let mut prev_above_layer = (na < 6)
-                    .then(|| Layer::<5, false> {
-                        id: name.to_owned(),
-                        na: na + 1,
-                        nb,
-                        nt: 2,
-                        scores: None,
-                        strats: None,
-                    })
-                    .unwrap_or(Layer::empty(""));
-                let mut prev_below_layer = (nb < 9)
-                    .then(|| Layer::<5, false> {
-                        id: name.to_owned(),
-                        na,
-                        nb: nb + 1,
-                        nt: 2,
-                        scores: None,
-                        strats: None,
-                    })
-                    .unwrap_or(Layer::empty(""));
-
-                let timer = Instant::now();
-
-                prev_above_layer.load_dists(MAX_SCORE_5);
-                prev_below_layer.load_dists(MAX_SCORE_5);
-
-                let t = timer.elapsed();
-                println!("Loading took {t:.2?}");
-                load_timer += t;
-
-                let timer = Instant::now();
-
-                let (scores, strats) = solve_layer_5dice_cells(
-                    na,
+            let mut prev_above_layer = (na < 6)
+                .then(|| Layer::<5, false> {
+                    id: name.to_owned(),
+                    na: na + 1,
                     nb,
-                    MAX_SCORE_5,
-                    prev_above_layer.scores.as_ref().unwrap().view(),
-                    prev_below_layer.scores.as_ref().unwrap().view(),
-                    measure,
-                );
+                    nt: 2,
+                    scores: None,
+                    strats: None,
+                })
+                .unwrap_or(Layer::empty(""));
+            let mut prev_below_layer = (nb < 9)
+                .then(|| Layer::<5, false> {
+                    id: name.to_owned(),
+                    na,
+                    nb: nb + 1,
+                    nt: 2,
+                    scores: None,
+                    strats: None,
+                })
+                .unwrap_or(Layer::empty(""));
 
-                prev_above_layer.scores = None;
-                prev_below_layer.scores = None;
+            let timer = Instant::now();
 
-                let t = timer.elapsed();
-                println!("Solving took {t:.2?}");
-                compute_timer += t;
+            prev_above_layer.load_dists(MAX_SCORE_5);
+            prev_below_layer.load_dists(MAX_SCORE_5);
 
-                let scores_contracted = contract_throws::<5>(scores.view());
+            let t = timer.elapsed();
+            println!("Loading took {t:.2?}");
+            load_timer += t;
 
-                layer.scores = Some(scores_contracted);
-                layer.strats = Some(strats);
+            let timer = Instant::now();
 
-                let timer = Instant::now();
+            let (scores, strats) = solve_layer_5dice_cells(
+                na,
+                nb,
+                MAX_SCORE_5,
+                prev_above_layer.scores.as_ref().unwrap().view(),
+                prev_below_layer.scores.as_ref().unwrap().view(),
+                measure,
+            );
 
-                prev_scores_full = Some(scores);
+            prev_above_layer.scores = None;
+            prev_below_layer.scores = None;
 
-                let t = timer.elapsed();
-                println!("Contracting took  {t:.2?}");
-                save_timer += t;
+            let t = timer.elapsed();
+            println!("Solving took {t:.2?}");
+            compute_timer += t;
 
-                let timer = Instant::now();
+            let scores_contracted = contract_throws::<5>(scores.view());
 
-                layer.save_scores();
-                layer.save_strats();
+            layer.scores = Some(scores_contracted);
+            layer.strats = Some(strats);
 
-                layer.scores = None;
-                layer.strats = None;
+            let timer = Instant::now();
 
-                let t = timer.elapsed();
-                println!("Saving took  {t:.2?}");
-                save_timer += t;
-            }
+            let mut prev_scores_full = Some(scores);
+
+            let t = timer.elapsed();
+            println!("Contracting took  {t:.2?}");
+            save_timer += t;
+
+            let timer = Instant::now();
+
+            layer.save_scores();
+            layer.save_strats();
+
+            layer.scores = None;
+            layer.strats = None;
+
+            let t = timer.elapsed();
+            println!("Saving took  {t:.2?}");
+            save_timer += t;
 
             for nt in 1..3 {
                 println!("--------------------------------");
@@ -260,7 +256,7 @@ fn solve_5dice<O: Ord + Add<f32, Output = O> + Clone + Copy>(
 
                     let timer = Instant::now();
 
-                    let mut scores = Array4::zeros([
+                    let mut scores = make_zero_dists([
                         ABOVE_LEVELS_5[na].len(),
                         BELOW_LEVELS_5[nb].len(),
                         DICE_DISTR.5.len(),

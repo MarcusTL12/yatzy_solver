@@ -17,6 +17,16 @@ use crate::{
     yatzy::State,
 };
 
+pub fn make_zero_dists(shape: [usize; 4]) -> Array4<f32> {
+    let mut dists = Array4::zeros(shape);
+
+    for mut x in dists.rows_mut() {
+        x[0] = 1.0;
+    }
+
+    dists
+}
+
 pub fn solve_layer_5dice_cells<O: Ord + Add<f32, Output = O> + Clone + Copy>(
     na: usize,
     nb: usize,
@@ -29,7 +39,7 @@ pub fn solve_layer_5dice_cells<O: Ord + Add<f32, Output = O> + Clone + Copy>(
     let n_ai: usize = ABOVE_LEVELS_5[na].len();
     let n_bi: usize = BELOW_LEVELS_5[nb].len();
 
-    let mut dists = Array4::zeros([n_ai, n_bi, N_DICE_THROWS, n_s]);
+    let mut dists = make_zero_dists([n_ai, n_bi, N_DICE_THROWS, n_s]);
     let mut strats = Array3::zeros([n_ai, n_bi, N_DICE_THROWS]);
 
     let mut zero_dist = Array1::zeros([n_s]);
