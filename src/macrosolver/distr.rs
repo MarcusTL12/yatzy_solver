@@ -243,70 +243,66 @@ fn solve_5dice<O: Ord + Add<f32, Output = O> + Clone + Copy>(
                     strats: None,
                 };
 
-                if layer.is_done() {
-                    println!("Already done!");
-                } else {
-                    let timer = Instant::now();
+                let timer = Instant::now();
 
-                    let prev_scores = prev_scores_full.take().unwrap();
+                let prev_scores = prev_scores_full.take().unwrap();
 
-                    let t = timer.elapsed();
-                    println!("Loading took {t:.2?}");
-                    load_timer += t;
+                let t = timer.elapsed();
+                println!("Loading took {t:.2?}");
+                load_timer += t;
 
-                    let timer = Instant::now();
+                let timer = Instant::now();
 
-                    let mut scores = make_zero_dists([
-                        ABOVE_LEVELS_5[na].len(),
-                        BELOW_LEVELS_5[nb].len(),
-                        DICE_DISTR.5.len(),
-                        MAX_SCORE_5,
-                    ]);
-                    let mut strats = Array3::zeros([
-                        ABOVE_LEVELS_5[na].len(),
-                        BELOW_LEVELS_5[nb].len(),
-                        DICE_DISTR.5.len(),
-                    ]);
+                let mut scores = make_zero_dists([
+                    ABOVE_LEVELS_5[na].len(),
+                    BELOW_LEVELS_5[nb].len(),
+                    DICE_DISTR.5.len(),
+                    MAX_SCORE_5,
+                ]);
+                let mut strats = Array3::zeros([
+                    ABOVE_LEVELS_5[na].len(),
+                    BELOW_LEVELS_5[nb].len(),
+                    DICE_DISTR.5.len(),
+                ]);
 
-                    let t = timer.elapsed();
-                    println!("Alloc took {t:.2?}");
-                    compute_timer += t;
+                let t = timer.elapsed();
+                println!("Alloc took {t:.2?}");
+                compute_timer += t;
 
-                    let timer = Instant::now();
+                let timer = Instant::now();
 
-                    solve_layer_5dice_throws(
-                        prev_scores.view(),
-                        scores.view_mut(),
-                        strats.view_mut(),
-                        measure,
-                    );
+                solve_layer_5dice_throws(
+                    prev_scores.view(),
+                    scores.view_mut(),
+                    strats.view_mut(),
+                    measure,
+                );
 
-                    let t = timer.elapsed();
-                    println!("Solving took {t:.2?}");
-                    compute_timer += t;
+                let t = timer.elapsed();
+                println!("Solving took {t:.2?}");
+                compute_timer += t;
 
-                    let scores_contracted = contract_throws::<5>(scores.view());
+                let scores_contracted = contract_throws::<5>(scores.view());
 
-                    layer.scores = Some(scores_contracted);
-                    layer.strats = Some(strats);
+                layer.scores = Some(scores_contracted);
+                layer.strats = Some(strats);
 
-                    let timer = Instant::now();
+                let timer = Instant::now();
 
-                    prev_scores_full = Some(scores);
+                prev_scores_full = Some(scores);
 
-                    let t = timer.elapsed();
-                    println!("Contracting took  {t:.2?}");
-                    save_timer += t;
+                let t = timer.elapsed();
+                println!("Contracting took  {t:.2?}");
+                save_timer += t;
 
-                    let timer = Instant::now();
+                let timer = Instant::now();
 
-                    layer.save_scores();
-                    layer.save_strats();
+                layer.save_scores();
+                layer.save_strats();
 
-                    let t = timer.elapsed();
-                    println!("Saving took  {t:.2?}");
-                    save_timer += t;
-                }
+                let t = timer.elapsed();
+                println!("Saving took  {t:.2?}");
+                save_timer += t;
             }
         }
     }
