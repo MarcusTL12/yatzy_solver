@@ -205,12 +205,12 @@ fn solve_5dice<O: Ord + Add<f32, Output = O> + Clone + Copy>(
             println!("Solving took {t:.2?}");
             compute_timer += t;
 
+            let timer = Instant::now();
+
             let scores_contracted = contract_throws::<5>(scores.view());
 
             layer.scores = Some(scores_contracted);
             layer.strats = Some(strats);
-
-            let timer = Instant::now();
 
             let mut prev_scores_full = Some(scores);
 
@@ -282,12 +282,12 @@ fn solve_5dice<O: Ord + Add<f32, Output = O> + Clone + Copy>(
                 println!("Solving took {t:.2?}");
                 compute_timer += t;
 
+                let timer = Instant::now();
+
                 let scores_contracted = contract_throws::<5>(scores.view());
 
                 layer.scores = Some(scores_contracted);
                 layer.strats = Some(strats);
-
-                let timer = Instant::now();
 
                 prev_scores_full = Some(scores);
 
