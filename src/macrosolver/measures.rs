@@ -96,7 +96,7 @@ impl Add<f32> for QuantileMean {
     }
 }
 
-pub fn quantile(q: f32) -> impl Fn(&[f32]) -> QuantileMean {
+pub fn quantile(q: f32) -> impl Fn(&[f32]) -> QuantileMean + Copy {
     move |dist| QuantileMean {
         q: quantile_kernel(dist, q),
         m: mean_kernel(dist),

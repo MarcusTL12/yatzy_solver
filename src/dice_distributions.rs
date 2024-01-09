@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use ndarray::Array3;
+use ndarray::{Array1, Array3};
 use once_cell::sync::Lazy;
 
 use crate::dice_throw::DiceThrow;
@@ -1093,5 +1093,24 @@ pub static DICE_REROLL_MATRICES: Lazy<[Array3<f32>; 6]> = Lazy::new(|| {
         make_matrix(&DICE_DISTR.4, &DICE_ORDER_MAP.4),
         make_matrix(&DICE_DISTR.5, &DICE_ORDER_MAP.5),
         make_matrix(&DICE_DISTR.6, &DICE_ORDER_MAP.6),
+    ]
+});
+
+pub static DICE_PROBS_VECTORS: Lazy<[Array1<f32>; 6]> = Lazy::new(|| {
+    fn make_vec<const M: usize, const N: usize>(
+        distr: &[([u8; M], u32); N],
+    ) -> Array1<f32> {
+        let div = 1.0 / DICE_DIVISOR[M] as f32;
+        let vec: Vec<_> = distr.iter().map(|&(_, n)| n as f32 * div).collect();
+        Array1::from_shape_vec([vec.len()], vec).unwrap()
+    }
+
+    [
+        make_vec(&DICE_DISTR.1),
+        make_vec(&DICE_DISTR.2),
+        make_vec(&DICE_DISTR.3),
+        make_vec(&DICE_DISTR.4),
+        make_vec(&DICE_DISTR.5),
+        make_vec(&DICE_DISTR.6),
     ]
 });

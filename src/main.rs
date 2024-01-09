@@ -37,6 +37,7 @@ fn main() {
         "compute-strats-5x" => solve_5dicex(),
         "compute-strats-6" => solve_6dice(),
         "compute-strats-6x" => solve_6dicex(),
+        "compute-strats-full-5" => solve_5dice_dyn(&args[2]),
         "expected-score-5" => {
             let mut layer = Layer::<5, false> {
                 id: "".to_owned(),

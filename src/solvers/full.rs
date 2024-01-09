@@ -5,7 +5,7 @@ use ndarray::{
     parallel::prelude::{
         IndexedParallelIterator, IntoParallelIterator, ParallelIterator,
     },
-    s, Array2, Array3, Array4, ArrayView3, ArrayView4, ArrayViewMut3,
+    s, Array1, Array2, Array3, Array4, ArrayView3, ArrayView4, ArrayViewMut3,
     ArrayViewMut4, Zip,
 };
 use thread_local::ThreadLocal;
@@ -17,11 +17,10 @@ use crate::{
     yatzy::State,
 };
 
-pub fn solve_layer_5dice_cells<
-    O: Ord + Add<f32, Output = O> + Clone + Copy,
->(
+pub fn solve_layer_5dice_cells<O: Ord + Add<f32, Output = O> + Clone + Copy>(
     na: usize,
     nb: usize,
+    n_s: usize,
     prev_above_layer_dists: ArrayView3<f32>,
     prev_below_layer_dists: ArrayView3<f32>,
     measure: impl Fn(&[f32]) -> O + Send + Sync,
@@ -30,10 +29,11 @@ pub fn solve_layer_5dice_cells<
     let n_ai: usize = ABOVE_LEVELS_5[na].len();
     let n_bi: usize = BELOW_LEVELS_5[nb].len();
 
-    let (_, _, n_s) = prev_above_layer_dists.dim();
-
     let mut dists = Array4::zeros([n_ai, n_bi, N_DICE_THROWS, n_s]);
     let mut strats = Array3::zeros([n_ai, n_bi, N_DICE_THROWS]);
+
+    let mut zero_dist = Array1::zeros([n_s]);
+    zero_dist[0] = 1.0;
 
     Zip::indexed(dists.rows_mut())
         .and(&mut strats)
@@ -73,7 +73,13 @@ pub fn solve_layer_5dice_cells<
                     (m, cell_i, prev_layer_dist)
                 })
                 .max_by_key(|(m, _, _)| *m)
-                .unwrap();
+                .unwrap_or_else(|| {
+                    (
+                        measure(zero_dist.as_slice().unwrap()),
+                        0,
+                        zero_dist.view(),
+                    )
+                });
 
             if new_m > measure(cur_dist.as_slice().unwrap()) {
                 *cur_strat = cell_i as u8;
@@ -118,10 +124,7 @@ pub fn solve_layer_5dice_throws<O: Ord>(
         .zip(prev_dists_packed.outer_iter())
         .for_each(|((mut dists, strats), prev_dists)| {
             let buf_cell = tls.get_or(|| {
-                Cell::new(Array2::from_shape_simple_fn(
-                    [n_s, N_DICE_THROWS * N_DICE_CHOICE],
-                    || 0.0,
-                ))
+                Cell::new(Array2::zeros([N_DICE_THROWS * N_DICE_CHOICE, n_s]))
             });
 
             let mut buf = buf_cell.take();

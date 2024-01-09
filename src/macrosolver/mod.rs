@@ -140,6 +140,31 @@ impl<const X: bool> Layer<5, X> {
         Some(())
     }
 
+    pub fn load_dists(&mut self, n_s: usize) -> Option<()> {
+        if self.scores.is_none() {
+            let mut file = OpenOptions::new()
+                .read(true)
+                .open(self.scores_path())
+                .ok()?;
+
+            let mut scores = Array3::zeros([
+                ABOVE_LEVELS_5[self.na].len(),
+                BELOW_LEVELS_5[self.nb].len(),
+                n_s,
+            ]);
+
+            let data = scores.as_slice_mut().unwrap();
+
+            let bytes: &mut [u8] = floats_to_bytes_mut(data);
+
+            file.read_exact(bytes).unwrap();
+
+            self.scores = Some(scores);
+        }
+
+        Some(())
+    }
+
     pub fn load_strats(&mut self) -> Option<()> {
         if self.strats.is_none() {
             let mut file = OpenOptions::new()
