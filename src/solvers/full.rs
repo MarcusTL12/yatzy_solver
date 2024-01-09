@@ -20,9 +20,14 @@ use crate::{
 pub fn make_zero_dists(shape: [usize; 4]) -> Array4<f32> {
     let mut dists = Array4::zeros(shape);
 
-    for mut x in dists.rows_mut() {
-        x[0] = 1.0;
-    }
+    dists
+        .outer_iter_mut()
+        .into_par_iter()
+        .for_each(|mut dist_block| {
+            for mut x in dist_block.rows_mut() {
+                x[0] = 1.0;
+            }
+        });
 
     dists
 }

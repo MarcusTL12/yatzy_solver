@@ -268,6 +268,12 @@ fn solve_5dice<O: Ord + Add<f32, Output = O> + Clone + Copy>(
                         DICE_DISTR.5.len(),
                     ]);
 
+                    let t = timer.elapsed();
+                    println!("Alloc took {t:.2?}");
+                    compute_timer += t;
+
+                    let timer = Instant::now();
+
                     solve_layer_5dice_throws(
                         prev_scores.view(),
                         scores.view_mut(),
