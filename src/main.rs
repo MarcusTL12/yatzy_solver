@@ -7,8 +7,10 @@ use dice_distributions::{DICE_DISTR, DICE_DIVISOR};
 use file_segmentation::segment_dir;
 use guide::start;
 use macrosolver::{
-    normal::{solve_5dice, solve_6dice, Layer, PREFIX},
+    distr::solve_5dice_dyn,
+    normal::{solve_5dice, solve_6dice},
     saving::{solve_5dicex, solve_6dicex},
+    Layer, PREFIX,
 };
 use simulation::{simulate_n_5, simulate_n_6};
 
@@ -37,6 +39,7 @@ fn main() {
         "compute-strats-6x" => solve_6dicex(),
         "expected-score-5" => {
             let mut layer = Layer::<5, false> {
+                id: "".to_owned(),
                 na: 0,
                 nb: 0,
                 nt: 2,
@@ -59,6 +62,7 @@ fn main() {
         }
         "expected-score-5x" => {
             let mut layer = Layer::<5, true> {
+                id: "".to_owned(),
                 na: 0,
                 nb: 0,
                 nt: 2,
@@ -81,6 +85,7 @@ fn main() {
         }
         "expected-score-6x" => {
             let mut layer = Layer::<6, true> {
+                id: "".to_owned(),
                 na: 0,
                 nb: 0,
                 nt: 2,
@@ -113,6 +118,7 @@ fn main() {
         }
         "expected-score-6" => {
             let mut layer = Layer::<6, false> {
+                id: "".to_owned(),
                 na: 0,
                 nb: 0,
                 nt: 2,
@@ -153,6 +159,10 @@ fn main() {
                 format!("{}/{game}/{dir}_segmented/", PREFIX.as_str());
 
             segment_dir(&path, &outpath, chunksize);
+        }
+        "compute-distr" => {
+            let name = &args[2];
+            solve_5dice_dyn(name);
         }
         _ => panic!(),
     }

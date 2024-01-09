@@ -13,8 +13,7 @@ use crate::{
     level_ordering::{
         ABOVE_LEVELS_5, ABOVE_LEVELS_6, BELOW_LEVELS_5, BELOW_LEVELS_6,
     },
-    macrosolver::normal::{Layer, PREFIX},
-    yatzy::{cell_from_dice, State},
+    yatzy::{cell_from_dice, State}, macrosolver::{PREFIX, Layer},
 };
 
 const HELP_MSG: &str = r#"
@@ -422,6 +421,7 @@ where
     let total_index = (ai * lb + bi) * lt + ti;
 
     let layer = Layer::<N, false> {
+        id: "".to_owned(),
         na,
         nb,
         nt: 0,
@@ -454,6 +454,7 @@ fn get_rethrow_strat<const N: usize>(
     let total_index = (ai * lb + bi) * lt + ti;
 
     let layer = Layer::<N, false> {
+        id: "".to_owned(),
         na,
         nb,
         nt: throws_left,
@@ -494,6 +495,7 @@ fn get_combined_strat<const N: usize>(
     let total_index = (ai * lb + bi) * lt + ti;
 
     let layer = Layer::<N, true> {
+        id: "".to_owned(),
         na,
         nb,
         nt: throws_left,
@@ -537,6 +539,7 @@ fn get_score<const N: usize, const X: bool>(
     let total_index = (ai * lb + bi) * lt + ti;
 
     let layer = Layer::<N, X> {
+        id: "".to_owned(),
         na,
         nb,
         nt: throws_left,

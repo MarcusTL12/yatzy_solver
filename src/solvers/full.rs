@@ -18,7 +18,7 @@ use crate::{
 };
 
 pub fn solve_layer_5dice_cells<
-    O: Ord + Add<usize, Output = O> + Clone + Copy,
+    O: Ord + Add<f32, Output = O> + Clone + Copy,
 >(
     na: usize,
     nb: usize,
@@ -68,7 +68,7 @@ pub fn solve_layer_5dice_cells<
                         prev_layer.slice_move(s![new_ai, new_bi, ..]);
 
                     let m = measure(prev_layer_dist.as_slice().unwrap())
-                        + extra_score;
+                        + extra_score as f32;
 
                     (m, cell_i, prev_layer_dist)
                 })

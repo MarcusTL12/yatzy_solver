@@ -10,14 +10,15 @@ use crate::{
         get_state_indices5, get_state_indices6, get_total_score, Strategy,
     },
     macrosolver::{
-        normal::{make_thin_layers_5dice, make_thin_layers_6dice, Layer},
+        make_thin_layers_5dice, make_thin_layers_6dice,
         saving::{make_thin_layers_5dicex, make_thin_layers_6dicex},
+        Layer,
     },
     yatzy::cell_from_dice,
 };
 
 pub fn simulate_n_5(scores: &mut [u32]) {
-    let mut layers = make_thin_layers_5dice();
+    let mut layers = make_thin_layers_5dice("");
 
     for layer in &mut layers {
         layer.as_mut().unwrap().load_strats();
@@ -29,7 +30,7 @@ pub fn simulate_n_5(scores: &mut [u32]) {
 }
 
 pub fn simulate_n_5x(scores: &mut [u32]) {
-    let mut layers = make_thin_layers_5dicex();
+    let mut layers = make_thin_layers_5dicex("");
 
     for layer in &mut layers {
         layer.as_mut().unwrap().load_strats();
@@ -41,7 +42,7 @@ pub fn simulate_n_5x(scores: &mut [u32]) {
 }
 
 pub fn simulate_n_6x(scores: &mut [u32]) {
-    let mut layers = make_thin_layers_6dicex();
+    let mut layers = make_thin_layers_6dicex("");
 
     layers.par_iter_mut().for_each(|layer| {
         layer.as_mut().unwrap().load_strats();
@@ -53,7 +54,7 @@ pub fn simulate_n_6x(scores: &mut [u32]) {
 }
 
 pub fn simulate_n_5_full(scores: &mut [[u32; 15]]) {
-    let mut layers = make_thin_layers_5dice();
+    let mut layers = make_thin_layers_5dice("");
 
     for layer in &mut layers {
         layer.as_mut().unwrap().load_strats();
@@ -67,7 +68,7 @@ pub fn simulate_n_5_full(scores: &mut [[u32; 15]]) {
 }
 
 pub fn simulate_n_5x_full(scores: &mut [[u32; 15]]) {
-    let mut layers = make_thin_layers_5dicex();
+    let mut layers = make_thin_layers_5dicex("");
 
     for layer in &mut layers {
         layer.as_mut().unwrap().load_strats();
@@ -81,7 +82,7 @@ pub fn simulate_n_5x_full(scores: &mut [[u32; 15]]) {
 }
 
 pub fn simulate_n_6x_full(scores: &mut [[u32; 20]]) {
-    let mut layers = make_thin_layers_6dicex();
+    let mut layers = make_thin_layers_6dicex("");
 
     for layer in &mut layers {
         layer.as_mut().unwrap().load_strats();
@@ -95,7 +96,7 @@ pub fn simulate_n_6x_full(scores: &mut [[u32; 20]]) {
 }
 
 pub fn simulate_n_6(scores: &mut [u32]) {
-    let mut layers = make_thin_layers_6dice();
+    let mut layers = make_thin_layers_6dice("");
 
     for layer in &mut layers {
         layer.as_mut().unwrap().load_strats();
@@ -107,7 +108,7 @@ pub fn simulate_n_6(scores: &mut [u32]) {
 }
 
 pub fn simulate_n_6_full(scores: &mut [[u32; 20]]) {
-    let mut layers = make_thin_layers_6dice();
+    let mut layers = make_thin_layers_6dice("");
 
     for layer in &mut layers {
         layer.as_mut().unwrap().load_strats();

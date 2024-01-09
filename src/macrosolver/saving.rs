@@ -7,17 +7,17 @@ use std::{
 use crossbeam::channel::bounded;
 use ndarray::Array3;
 
-use crate::{
-    macrosolver::normal::{Layer, PREFIX},
-    solvers::mean::{
-        solve_layer_5dice_cells, solve_layer_5dice_throws,
-        solve_layer_6dice_cells, solve_layer_6dice_throws,
-    },
-};
+use crate::{solvers::mean::{
+    solve_layer_5dice_cells, solve_layer_5dice_throws, solve_layer_6dice_cells,
+    solve_layer_6dice_throws,
+}, macrosolver::PREFIX};
 
-pub fn make_thin_layers_5dicex() -> Array3<Option<Layer<5, true>>> {
+use super::Layer;
+
+pub fn make_thin_layers_5dicex(id: &str) -> Array3<Option<Layer<5, true>>> {
     Array3::from_shape_fn([7, 10, 3 + 15 * 2], |(na, nb, nt)| {
         Some(Layer {
+            id: id.to_owned(),
             na,
             nb,
             nt,
@@ -27,9 +27,10 @@ pub fn make_thin_layers_5dicex() -> Array3<Option<Layer<5, true>>> {
     })
 }
 
-pub fn make_thin_layers_6dicex() -> Array3<Option<Layer<6, true>>> {
+pub fn make_thin_layers_6dicex(id: &str) -> Array3<Option<Layer<6, true>>> {
     Array3::from_shape_fn([7, 15, 3 + 20 * 2], |(na, nb, nt)| {
         Some(Layer {
+            id: id.to_owned(),
             na,
             nb,
             nt,
@@ -43,7 +44,7 @@ pub fn solve_5dicex() {
     create_dir_all(format!("{}/5x/scores/", *PREFIX)).unwrap();
     create_dir_all(format!("{}/5x/strats/", *PREFIX)).unwrap();
 
-    let mut layers = make_thin_layers_5dicex();
+    let mut layers = make_thin_layers_5dicex("");
 
     let global_timer = Instant::now();
     let mut load_timer = Duration::ZERO;
@@ -63,12 +64,16 @@ pub fn solve_5dicex() {
                 if layer.is_done() {
                     println!("Already done!");
                 } else {
-                    let mut prev_above_layer = layers
-                        .get_mut([na + 1, nb, nt + 2])
-                        .map_or_else(Layer::empty, |l| l.take().unwrap());
-                    let mut prev_below_layer = layers
-                        .get_mut([na, nb + 1, nt + 2])
-                        .map_or_else(Layer::empty, |l| l.take().unwrap());
+                    let mut prev_above_layer =
+                        layers.get_mut([na + 1, nb, nt + 2]).map_or_else(
+                            || Layer::empty(""),
+                            |l| l.take().unwrap(),
+                        );
+                    let mut prev_below_layer =
+                        layers.get_mut([na, nb + 1, nt + 2]).map_or_else(
+                            || Layer::empty(""),
+                            |l| l.take().unwrap(),
+                        );
                     let mut prev_throw_layer = layers
                         .get_mut([na, nb, nt.wrapping_sub(1)])
                         .map(|x| x.take().unwrap());
@@ -162,7 +167,7 @@ pub fn solve_6dicex() {
     create_dir_all(format!("{}/6x/scores/", *PREFIX)).unwrap();
     create_dir_all(format!("{}/6x/strats/", *PREFIX)).unwrap();
 
-    let mut layers = make_thin_layers_6dicex();
+    let mut layers = make_thin_layers_6dicex("");
 
     let global_timer = Instant::now();
     let mut load_timer = Duration::ZERO;
@@ -203,23 +208,31 @@ pub fn solve_6dicex() {
                         loading -= 1;
                     }
 
-                    let mut prev_above_layer = layers
-                        .get_mut([na + 1, nb, nt + 2])
-                        .map_or_else(Layer::empty, |l| l.take().unwrap());
-                    let mut prev_below_layer = layers
-                        .get_mut([na, nb + 1, nt + 2])
-                        .map_or_else(Layer::empty, |l| l.take().unwrap());
+                    let mut prev_above_layer =
+                        layers.get_mut([na + 1, nb, nt + 2]).map_or_else(
+                            || Layer::empty(""),
+                            |l| l.take().unwrap(),
+                        );
+                    let mut prev_below_layer =
+                        layers.get_mut([na, nb + 1, nt + 2]).map_or_else(
+                            || Layer::empty(""),
+                            |l| l.take().unwrap(),
+                        );
                     let mut prev_throw_layer = layers
                         .get_mut([na, nb, nt.wrapping_sub(1)])
                         .map(|x| x.take().unwrap());
 
                     if nt < nt_max {
-                        let next_above_layer = layers
-                            .get_mut([na + 1, nb, nt + 3])
-                            .map_or_else(Layer::empty, |l| l.take().unwrap());
-                        let next_below_layer = layers
-                            .get_mut([na, nb + 1, nt + 3])
-                            .map_or_else(Layer::empty, |l| l.take().unwrap());
+                        let next_above_layer =
+                            layers.get_mut([na + 1, nb, nt + 3]).map_or_else(
+                                || Layer::empty(""),
+                                |l| l.take().unwrap(),
+                            );
+                        let next_below_layer =
+                            layers.get_mut([na, nb + 1, nt + 3]).map_or_else(
+                                || Layer::empty(""),
+                                |l| l.take().unwrap(),
+                            );
 
                         ins_send.send(next_above_layer).unwrap();
                         ins_send.send(next_below_layer).unwrap();
